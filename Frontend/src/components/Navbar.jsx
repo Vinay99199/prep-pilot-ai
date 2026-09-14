@@ -42,10 +42,10 @@ const Navbar = () => {
                             <NavLink className="site-nav__link" to="/" onClick={closeMenu}>
                                 My preparation
                             </NavLink>
-                            <span className="site-nav__user">
+                            <NavLink className="site-nav__user" to="/account" onClick={closeMenu}>
                                 <span className="site-nav__avatar">{user.username?.charAt(0).toUpperCase() || "U"}</span>
                                 <span>{user.username || "Candidate"}</span>
-                            </span>
+                            </NavLink>
                             <button className="site-nav__logout" type="button" onClick={logout}>
                                 Log out
                             </button>

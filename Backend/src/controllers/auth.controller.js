@@ -150,9 +150,50 @@ async function getMeController(req, res) {
 
 
 
+async function updateProfileController(req, res) {
+    const { username, email, currentPassword, newPassword } = req.body
+    const user = await userModel.findById(req.user.id)
+
+    if (!user) return res.status(404).json({ message: "User account not found" })
+
+    const nextUsername = username?.trim()
+    const nextEmail = email?.trim().toLowerCase()
+
+    if (!nextUsername || !nextEmail) {
+        return res.status(400).json({ message: "Username and email are required" })
+    }
+
+    if (newPassword && (!currentPassword || newPassword.length < 6)) {
+        return res.status(400).json({ message: "Enter your current password and a new password of at least 6 characters" })
+    }
+
+    if (newPassword) {
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password)
+        if (!isCurrentPasswordValid) return res.status(400).json({ message: "Your current password is incorrect" })
+        user.password = await bcrypt.hash(newPassword, 10)
+    }
+
+    const duplicateUser = await userModel.findOne({
+        _id: { $ne: user._id },
+        $or: [ { username: nextUsername }, { email: nextEmail } ]
+    })
+
+    if (duplicateUser) return res.status(400).json({ message: "That username or email is already in use" })
+
+    user.username = nextUsername
+    user.email = nextEmail
+    await user.save()
+
+    res.status(200).json({
+        message: "Profile updated successfully",
+        user: { id: user._id, username: user.username, email: user.email }
+    })
+}
+
 module.exports = {
     registerUserController,
     loginUserController,
     logoutUserController,
-    getMeController
+    getMeController,
+    updateProfileController
 }

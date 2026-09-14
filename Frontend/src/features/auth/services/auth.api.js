@@ -50,3 +50,14 @@ export async function getMe() {
         throw err
     }
 }
+
+export async function updateProfile({ username, email, currentPassword, newPassword }) {
+    const response = await api.patch("/api/auth/profile", {
+        username,
+        email,
+        currentPassword,
+        newPassword
+    })
+
+    return response.data
+}

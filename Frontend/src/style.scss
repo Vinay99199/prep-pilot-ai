@@ -159,6 +159,12 @@ textarea:focus-visible {
     color: #25344a;
     font-size: 0.84rem;
     font-weight: 700;
+    text-decoration: none;
+}
+
+.site-nav__user:hover,
+.site-nav__user.active {
+    color: #0f8f80;
 }
 
 .site-nav__avatar {

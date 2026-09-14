@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { AuthContext } from "../auth.context.js";
-import { login, register, logout } from "../services/auth.api";
+import { login, register, logout, updateProfile } from "../services/auth.api";
 import { useNotifications } from "../../notifications/useNotifications"
 import { getUserFacingError } from "../../notifications/notification.utils"
 
@@ -61,5 +61,20 @@ export const useAuth = () => {
         }
     }
 
-    return { user, loading, handleRegister, handleLogin, handleLogout }
+    const handleProfileUpdate = async (profile) => {
+        setLoading(true)
+        try {
+            const data = await updateProfile(profile)
+            setUser(data.user)
+            showToast({ type: "success", message: "Your account details are updated." })
+            return true
+        } catch (error) {
+            showToast({ type: "error", message: getUserFacingError(error, "Profile update failed. Please try again.") })
+            return false
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { user, loading, handleRegister, handleLogin, handleLogout, handleProfileUpdate }
 }
