@@ -39,7 +39,13 @@ async function generateInterViewReportController(req, res) {
             })
         }
 
-       
+        const { selfDescription, jobDescription } = req.body
+
+        if (!jobDescription?.trim() || (!req.file && !selfDescription?.trim())) {
+            return res.status(400).json({
+                message: "A job description and either a resume or self-description are required."
+            })
+        }
 
         let resumeText = ""
 
@@ -52,8 +58,6 @@ async function generateInterViewReportController(req, res) {
 
             resumeText = resumeContent.text
         }
-
-        const { selfDescription, jobDescription } = req.body
 
         const interViewReportByAi = await generateInterviewReport({
             resume: resumeText,
@@ -70,7 +74,7 @@ async function generateInterViewReportController(req, res) {
             title: interViewReportByAi.title || "Interview Report"
         })
 
-        user.reportCount += 1
+        user.reportCount = (user.reportCount || 0) + 1
         await user.save()
 
         res.status(201).json({
@@ -91,6 +95,12 @@ async function generateInterViewReportController(req, res) {
         if (error.status === 503) {
             return res.status(503).json({
                 message: "Gemini AI service is temporarily unavailable. Please try again."
+            })
+        }
+
+        if (error.status === 504) {
+            return res.status(504).json({
+                message: "The interview report took too long to generate. Please try again."
             })
         }
 
