@@ -1,2 +1,16 @@
-node_modules/
+# Environment variables and secrets
 .env
+.env.*
+
+
+# Dependencies and build output
+node_modules/
+dist/
+
+# Logs
+*.log
+
+
+# Editor files
+.vscode/*
+
