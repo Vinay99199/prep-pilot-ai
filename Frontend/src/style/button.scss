@@ -3,14 +3,18 @@
     outline: none;
     padding-inline: 1.5rem;
     padding-block: 0.75rem;
-    border-radius: 1rem;
+    border-radius: 7px;
     cursor: pointer;
 
-    transition: all 0.3s ease-in-out;
+    transition: background-color 0.18s ease, transform 0.18s ease;
 
     &.primary-button{
-        background-color: #e1034d;
+        background-color: #087f73;
         color: white;
+
+        &:hover {
+            background-color: #05645c;
+        }
     }
     &.active{
         transform: scale(0.95);

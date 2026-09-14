@@ -141,6 +141,34 @@ async function getAllInterviewReportsController(req, res) {
     })
 }
 
+/**
+ * @description Delete an interview report owned by the logged in user.
+ */
+async function deleteInterviewReportController(req, res) {
+    const { interviewReportId } = req.params
+
+    if (!mongoose.isValidObjectId(interviewReportId)) {
+        return res.status(400).json({
+            message: "Invalid interview report ID."
+        })
+    }
+
+    const interviewReport = await interviewReportModel.findOneAndDelete({
+        _id: interviewReportId,
+        user: req.user.id
+    })
+
+    if (!interviewReport) {
+        return res.status(404).json({
+            message: "Interview report not found."
+        })
+    }
+
+    res.status(200).json({
+        message: "Interview report deleted successfully."
+    })
+}
+
 
 /**
  * @description Controller to generate resume PDF based on user self description, resume and job description.
@@ -177,4 +205,4 @@ async function generateResumePdfController(req, res) {
     res.send(pdfBuffer)
 }
 
-module.exports = { generateInterViewReportController, getInterviewReportByIdController, getAllInterviewReportsController, generateResumePdfController }
+module.exports = { generateInterViewReportController, getInterviewReportByIdController, getAllInterviewReportsController, deleteInterviewReportController, generateResumePdfController }

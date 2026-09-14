@@ -1,7 +1,9 @@
-import { getAllInterviewReports, generateInterviewReport, getInterviewReportById, generateResumePdf } from "../services/interview.api"
+import { getAllInterviewReports, generateInterviewReport, getInterviewReportById, generateResumePdf, deleteInterviewReport } from "../services/interview.api"
 import { useCallback, useContext, useEffect } from "react"
 import { InterviewContext } from "../interview.context"
 import { useParams } from "react-router"
+import { useNotifications } from "../../notifications/useNotifications"
+import { getUserFacingError } from "../../notifications/notification.utils"
 
 
 export const useInterview = () => {
@@ -14,6 +16,7 @@ export const useInterview = () => {
     }
 
     const { loading, setLoading, report, setReport, reports, setReports } = context
+    const { showToast } = useNotifications()
 
     const generateReport = async ({ jobDescription, selfDescription, resumeFile }) => {
         setLoading(true)
@@ -26,17 +29,14 @@ export const useInterview = () => {
             })
 
             setReport(response.interviewReport)
+            showToast({ type: "success", message: "Your interview plan is ready." })
 
             return response.interviewReport
 
         } catch (error) {
-            console.log("Generate Report Error:", error)
+            console.error("Generate report failed:", error)
 
-            const message =
-                error?.response?.data?.message ||
-                "Failed to generate interview report."
-
-            alert(message)
+            showToast({ type: "error", message: getUserFacingError(error, "We could not generate your interview plan.") })
 
             return null
 
@@ -51,20 +51,18 @@ export const useInterview = () => {
     try {
         const response = await getInterviewReportById(interviewId)
 
-        console.log("FULL RESPONSE:", response)
-        console.log("INTERVIEW REPORT:", response?.interviewReport)
-
         setReport(response?.interviewReport || null)
 
         return response?.interviewReport || null
 
     } catch (error) {
-        console.log("GET REPORT ERROR:", error)
+        console.error("Get report failed:", error)
+        showToast({ type: "error", message: getUserFacingError(error, "We could not load that interview plan.") })
         return null
     } finally {
         setLoading(false)
     }
-    }, [ setLoading, setReport ])
+    }, [ setLoading, setReport, showToast ])
 
     const getReports = useCallback(async () => {
         setLoading(true)
@@ -74,13 +72,14 @@ export const useInterview = () => {
             setReports(interviewReports)
             return interviewReports
         } catch (error) {
-            console.log(error)
+            console.error("Get interview reports failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "We could not load your recent plans.") })
             setReports([])
             return []
         } finally {
             setLoading(false)
         }
-    }, [ setLoading, setReports ])
+    }, [ setLoading, setReports, showToast ])
 
     const getResumePdf = async (interviewReportId) => {
         setLoading(true)
@@ -92,11 +91,28 @@ export const useInterview = () => {
             link.setAttribute("download", `resume_${interviewReportId}.pdf`)
             document.body.appendChild(link)
             link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+            showToast({ type: "success", message: "Your resume PDF has been downloaded." })
         }
         catch (error) {
-            console.log(error)
+            console.error("Resume PDF generation failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "We could not generate the resume PDF.") })
         } finally {
             setLoading(false)
+        }
+    }
+
+    const deleteReport = async (interviewReportId) => {
+        try {
+            await deleteInterviewReport(interviewReportId)
+            setReports(currentReports => currentReports.filter(item => item._id !== interviewReportId))
+            showToast({ type: "success", message: "Interview plan deleted." })
+            return true
+        } catch (error) {
+            console.error("Delete interview report failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "We could not delete that interview plan.") })
+            throw error
         }
     }
 
@@ -108,6 +124,6 @@ export const useInterview = () => {
         }
     }, [ interviewId, getReportById, getReports ])
 
-    return { loading, report, reports, generateReport, getReportById, getReports, getResumePdf }
+    return { loading, report, reports, generateReport, getReportById, getReports, getResumePdf, deleteReport }
 
 }

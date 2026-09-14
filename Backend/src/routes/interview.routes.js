@@ -29,6 +29,13 @@ interviewRouter.get("/report/:interviewId", authMiddleware.authUser, interviewCo
  */
 interviewRouter.get("/", authMiddleware.authUser, interviewController.getAllInterviewReportsController)
 
+/**
+ * @route DELETE /api/interview/report/:interviewReportId
+ * @description delete an interview report owned by the logged in user.
+ * @access private
+ */
+interviewRouter.delete("/report/:interviewReportId", authMiddleware.authUser, interviewController.deleteInterviewReportController)
+
 
 /**
  * @route GET /api/interview/resume/pdf

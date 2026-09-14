@@ -1,6 +1,8 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { AuthContext } from "../auth.context.js";
-import { login, register, logout, getMe } from "../services/auth.api";
+import { login, register, logout } from "../services/auth.api";
+import { useNotifications } from "../../notifications/useNotifications"
+import { getUserFacingError } from "../../notifications/notification.utils"
 
 
 
@@ -8,6 +10,7 @@ export const useAuth = () => {
 
     const context = useContext(AuthContext)
     const { user, setUser, loading, setLoading } = context
+    const { showToast } = useNotifications()
 
 
     const handleLogin = async ({ email, password }) => {
@@ -16,8 +19,10 @@ export const useAuth = () => {
             const data = await login({ email, password })
             setUser(data.user)
             return true
-        } catch {
+        } catch (error) {
             setUser(null)
+            console.error("Login failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "Login failed. Please try again.") })
             return false
         } finally {
             setLoading(false)
@@ -30,8 +35,10 @@ export const useAuth = () => {
             const data = await register({ username, email, password })
             setUser(data.user)
             return true
-        } catch {
+        } catch (error) {
             setUser(null)
+            console.error("Registration failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "Registration failed. Please try again.") })
             return false
         } finally {
             setLoading(false)
@@ -43,31 +50,16 @@ export const useAuth = () => {
         try {
             await logout()
             setUser(null)
+            showToast({ type: "success", message: "You have been logged out." })
             return true
-        } catch {
+        } catch (error) {
+            console.error("Logout failed:", error)
+            showToast({ type: "error", message: getUserFacingError(error, "Logout failed. Please try again.") })
             return false
         } finally {
             setLoading(false)
         }
     }
-
-    useEffect(() => {
-
-        const getAndSetUser = async () => {
-            try {
-
-                const data = await getMe()
-                setUser(data.user)
-            } catch {
-                setUser(null)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        getAndSetUser()
-
-    }, [ setLoading, setUser ])
 
     return { user, loading, handleRegister, handleLogin, handleLogout }
 }

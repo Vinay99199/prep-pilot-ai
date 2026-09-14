@@ -42,3 +42,159 @@ main{
         text-decoration: none;
     }
 }
+
+main:has(.form-container) {
+    min-height: calc(100vh - 74px);
+    align-items: flex-start;
+    padding: 5rem 1.5rem;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(183, 241, 231, 0.45), transparent 28%),
+        linear-gradient(135deg, #f5f7fb 0%, #edf5f3 100%);
+
+    .form-container {
+        width: min(100%, 440px);
+        min-width: 0;
+        padding: 2.5rem;
+        gap: 1.5rem;
+        border: 1px solid #dce6ef;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 50px rgba(31, 58, 83, 0.1);
+    }
+
+    h1 {
+        color: #102a43;
+        font-size: 2rem;
+        letter-spacing: -0.04em;
+    }
+
+    form {
+        gap: 1rem;
+    }
+
+    .input-group {
+        gap: 0.45rem;
+
+        label {
+            color: #3f5066;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #d7e0eb;
+            border-radius: 9px;
+            background: #fbfcfe;
+            color: #142033;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+
+            &:focus {
+                border-color: #0f8f80;
+                box-shadow: 0 0 0 3px rgba(15, 143, 128, 0.12);
+            }
+        }
+    }
+
+    .button.primary-button {
+        margin-top: 0.4rem;
+        padding: 0.85rem 1rem;
+        border-radius: 9px;
+        background: #0f8f80;
+        font-weight: 800;
+
+        &:hover {
+            background: #0b766a;
+        }
+    }
+
+    p {
+        color: #75839a;
+        font-size: 0.84rem;
+        text-align: center;
+    }
+
+    a {
+        color: #0f8f80;
+        font-weight: 800;
+    }
+}
+
+@media (max-width: 520px) {
+    main:has(.form-container) {
+        padding: 2.5rem 1rem;
+
+        .form-container {
+            padding: 1.75rem;
+        }
+    }
+}
+
+/* Auth surfaces use the same quiet, paper-and-ink system as the product shell. */
+main:has(.form-container) {
+    background: #f7f8f5;
+    align-items: center;
+    padding: 3rem 1.5rem;
+
+    .form-container {
+        width: min(100%, 430px);
+        padding: 2.4rem;
+        border: 1px solid #dbe3e3;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(23, 42, 58, 0.07);
+        gap: 1.35rem;
+    }
+
+    h1 {
+        color: #172a3a;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2.15rem;
+        letter-spacing: -0.045em;
+    }
+
+    .input-group {
+        gap: 0.4rem;
+
+        label {
+            color: #435563;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        input {
+            border: 1px solid #cbd8d9;
+            border-radius: 6px;
+            background: #fbfcfa;
+            padding: 0.8rem 0.9rem;
+
+            &:hover {
+                border-color: #9fb7b6;
+            }
+
+            &:focus {
+                border-color: #087f73;
+                box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.12);
+            }
+        }
+    }
+
+    .button.primary-button {
+        border-radius: 7px;
+        background: #087f73;
+
+        &:hover {
+            background: #05645c;
+        }
+    }
+
+    p {
+        color: #6b7b87;
+    }
+
+    a {
+        color: #087f73;
+    }
+}

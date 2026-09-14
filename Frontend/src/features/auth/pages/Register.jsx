@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import { useNotifications } from '../../notifications/useNotifications'
 
 const Register = () => {
 
@@ -10,11 +11,21 @@ const Register = () => {
     const [ password, setPassword ] = useState("")
 
     const {loading,handleRegister} = useAuth()
+    const { showToast } = useNotifications()
     
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (!username.trim() || !email.trim() || !password) {
+            showToast({ type: "warning", message: "Complete all fields to create your account." })
+            return
+        }
+        if (password.length < 6) {
+            showToast({ type: "warning", message: "Your password must be at least 6 characters." })
+            return
+        }
         const success = await handleRegister({username,email,password})
         if (success) {
+            showToast({ type: "success", message: "Your InterviewAI account is ready." })
             navigate("/")
         }
     }

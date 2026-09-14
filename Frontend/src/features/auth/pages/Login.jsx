@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import "../auth.form.scss"
 import { useAuth } from '../hooks/useAuth'
+import { useNotifications } from '../../notifications/useNotifications'
 
 const Login = () => {
 
     const { loading, handleLogin } = useAuth()
+    const { showToast } = useNotifications()
     const navigate = useNavigate()
 
     const [ email, setEmail ] = useState("")
@@ -13,8 +15,13 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (!email.trim() || !password) {
+            showToast({ type: "warning", message: "Enter your email and password to continue." })
+            return
+        }
         const success = await handleLogin({email,password})
         if (success) {
+            showToast({ type: "success", message: "Welcome back to InterviewAI." })
             navigate('/')
         }
     }
