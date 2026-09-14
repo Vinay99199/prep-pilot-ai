@@ -39,22 +39,6 @@ const Account = () => {
 
     return (
         <main className="account-page">
-            <div className="account-page__top">
-                <div className="account-page__header">
-                    <p className="account-page__eyebrow">Account settings</p>
-
-                    <h1>
-                        Keep your profile
-                        <span> current.</span>
-                    </h1>
-
-                    <p>
-                        Manage your personal information and security settings
-                        to keep your interview experience up to date.
-                    </p>
-                </div>
-            </div>
-
             <div className="account-layout">
                 <aside className="account-summary">
                     <div className="account-summary__top">
