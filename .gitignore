@@ -1,7 +1,6 @@
 # Environment variables and secrets
 .env
 .env.*
-!.env.example
 
 # Dependencies and build output
 node_modules/
@@ -9,13 +8,4 @@ dist/
 
 # Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
-# Editor files
-.vscode/*
-!.vscode/extensions.json
-.idea/
-.DS_Store
