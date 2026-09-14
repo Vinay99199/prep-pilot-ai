@@ -1,12 +1,12 @@
 .account-page {
-    width: min(1080px, calc(100% - 3rem));
+    width: min(1160px, calc(100% - 4rem));
     margin: 0 auto;
-    padding: 4.5rem 0 5rem;
+    padding: 4.75rem 0 6rem;
 }
 
 .account-page__header {
-    max-width: 630px;
-    margin-bottom: 2.5rem;
+    max-width: 720px;
+    margin: 0 0 2.75rem 1rem;
 }
 
 .account-page__eyebrow,
@@ -23,7 +23,7 @@
     margin-bottom: 0.7rem;
     color: #102a43;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(2.3rem, 5vw, 4rem);
+    font-size: clamp(2.5rem, 5vw, 4.35rem);
     font-weight: 500;
     letter-spacing: -0.05em;
     line-height: 0.98;
@@ -38,8 +38,8 @@
 
 .account-layout {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: minmax(250px, 0.78fr) minmax(0, 2fr);
+    gap: 1.5rem;
     align-items: start;
 }
 
@@ -51,16 +51,18 @@
 }
 
 .account-summary {
-    padding: 1.5rem;
+    min-height: 270px;
+    padding: 1.75rem;
     border-top: 4px solid #0f8f80;
+    background: linear-gradient(145deg, #fff 0%, #f8fbfa 100%);
 }
 
 .account-summary__avatar {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     display: grid;
     place-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
     border-radius: 50%;
     background: #dff5f0;
     color: #0b766a;
@@ -110,7 +112,7 @@
 }
 
 .account-form {
-    padding: 2rem;
+    padding: 2.25rem 2.5rem;
 }
 
 .account-form__section {
@@ -118,17 +120,17 @@
     align-items: end;
     justify-content: space-between;
     gap: 1rem;
-    padding-bottom: 1.25rem;
+    padding-bottom: 1.4rem;
     border-bottom: 1px solid #e6eceb;
 }
 
 .account-form__section--password {
-    margin-top: 2.2rem;
+    margin-top: 2.5rem;
 }
 
 .account-form h2 {
     color: #172a3a;
-    font-size: 1.18rem;
+    font-size: 1.3rem;
 }
 
 .account-form__kicker {
@@ -147,8 +149,8 @@
 .account-form__fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    padding-top: 1.25rem;
+    gap: 1.25rem;
+    padding-top: 1.4rem;
 }
 
 .account-form label {
@@ -166,7 +168,7 @@
     border-radius: 6px;
     background: #fbfcfa;
     color: #172a3a;
-    padding: 0.8rem 0.9rem;
+    padding: 0.85rem 0.9rem;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -181,8 +183,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.25rem;
+    margin-top: 2.4rem;
+    padding-top: 1.4rem;
     border-top: 1px solid #e6eceb;
 }
 
@@ -202,6 +204,10 @@
     .account-page {
         width: min(100% - 2rem, 560px);
         padding: 3rem 0;
+    }
+
+    .account-page__header {
+        margin-left: 0;
     }
 
     .account-layout,
