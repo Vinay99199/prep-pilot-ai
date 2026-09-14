@@ -1,11 +1,2 @@
-# Environment variables and secrets
-.env
-.env.*
-
-# Dependencies and build output
 node_modules/
-dist/
-
-# Logs
-*.log
-
+.env

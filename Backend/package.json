@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev": "npx nodemon server.js",
-  "start": "node server.js"
-  }
+    "dev": "npx nodemon server.js",
+    "start": "node server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -24,6 +24,6 @@
     "pdf-parse": "^2.4.5",
     "puppeteer": "^25.10.0",
     "zod": "^4.6.1",
-    "zod-to-json-schema": "^3.25.2"
+    "zod-to-json-schema": "^3.25.0"
   }
 }
