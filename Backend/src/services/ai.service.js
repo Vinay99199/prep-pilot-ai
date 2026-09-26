@@ -307,12 +307,21 @@ async function generatePdfFromHtml(html) {
     let browser
 
     try {
+        const executablePath =
+            process.env.PUPPETEER_EXECUTABLE_PATH ||
+            "/opt/render/.cache/puppeteer/chrome/linux-152.0.7977.75/chrome-linux64/chrome"
+
+        console.log("Chrome executable:", executablePath)
+
         browser = await puppeteer.launch({
             headless: true,
+            executablePath,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage"
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-zygote"
             ]
         })
 
