@@ -341,14 +341,14 @@ async function generatePdfFromHtml(html) {
             await browser.close()
         }
     }
-} 
+}
+
 
 async function generateResumePdf({
     resume,
     selfDescription,
     jobDescription
 }) {
-
     const resumePdfSchema = z.object({
         html: z.string()
     })
@@ -392,7 +392,6 @@ Return only valid JSON matching the provided schema.
         for (let attempt = 1; attempt <= 2; attempt++) {
 
             try {
-
                 console.log(
                     `Resume Gemini request: ${model} - attempt ${attempt}/2`
                 )
@@ -421,22 +420,34 @@ Return only valid JSON matching the provided schema.
                     `Resume Gemini response received using ${model}`
                 )
 
-                const jsonContent =
-                    JSON.parse(response.text)
+                const jsonContent = JSON.parse(response.text)
 
                 const validatedResume =
                     resumePdfSchema.parse(jsonContent)
 
-                const pdfBuffer =
-                    await generatePdfFromHtml(
-                        validatedResume.html
+                // Gemini successfully generated HTML.
+                // Now generate the actual PDF.
+                try {
+                    const pdfBuffer =
+                        await generatePdfFromHtml(
+                            validatedResume.html
+                        )
+
+                    console.log(
+                        `Resume PDF generated successfully using ${model}`
                     )
 
-                console.log(
-                    `Resume PDF generated successfully using ${model}`
-                )
+                    return pdfBuffer
 
-                return pdfBuffer
+                } catch (pdfError) {
+
+                    console.error(
+                        "Resume PDF generation error:",
+                        pdfError
+                    )
+
+                    throw pdfError
+                }
 
             } catch (error) {
 
@@ -451,10 +462,20 @@ Return only valid JSON matching the provided schema.
                     error?.message
                 )
 
+                // 429 = quota exceeded.
+                // Do NOT retry the same request.
+                if (status === 429) {
+                    console.log(
+                        `${model} quota exceeded. Trying next model...`
+                    )
+
+                    break
+                }
+
+                // Retry only temporary server/service errors.
                 const retryable =
                     status === 503 ||
                     status === 504 ||
-                    status === 429 ||
                     error?.message?.includes("UNAVAILABLE") ||
                     error?.message?.includes("timed out")
 
@@ -464,7 +485,7 @@ Return only valid JSON matching the provided schema.
 
                 if (attempt < 2) {
 
-                    const delay = 1000
+                    const delay = 2000
 
                     console.log(
                         `Retrying ${model} in ${delay}ms...`
@@ -482,6 +503,7 @@ Return only valid JSON matching the provided schema.
         )
     }
 
+    // If all models failed
     const finalError = new Error(
         "AI service is temporarily unavailable. Please try again later."
     )
