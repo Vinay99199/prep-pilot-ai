@@ -303,6 +303,45 @@ Return only the JSON object matching the provided response schema.
     throw finalError
 }
 
+async function generatePdfFromHtml(html) {
+    let browser
+
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage"
+            ]
+        })
+
+        const page = await browser.newPage()
+
+        await page.setContent(html, {
+            waitUntil: "networkidle0"
+        })
+
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            preferCSSPageSize: true,
+            margin: {
+                top: "12mm",
+                right: "12mm",
+                bottom: "12mm",
+                left: "12mm"
+            }
+        })
+
+        return pdfBuffer
+
+    } finally {
+        if (browser) {
+            await browser.close()
+        }
+    }
+} 
 
 async function generateResumePdf({
     resume,
