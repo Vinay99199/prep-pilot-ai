@@ -1,5 +1,5 @@
 import { getAllInterviewReports, generateInterviewReport, getInterviewReportById, generateResumePdf, deleteInterviewReport } from "../services/interview.api"
-import { useCallback, useContext, useEffect } from "react"
+import { useCallback, useContext, useEffect, useRef } from "react"
 import { InterviewContext } from "../interview.context"
 import { useParams } from "react-router"
 import { useNotifications } from "../../notifications/useNotifications"
@@ -10,6 +10,12 @@ export const useInterview = () => {
 
     const context = useContext(InterviewContext)
     const { interviewId } = useParams()
+    const requestLocks = useRef({
+        generate: false,
+        reportById: false,
+        reports: false,
+        pdf: false
+    })
 
     if (!context) {
         throw new Error("useInterview must be used within an InterviewProvider")
@@ -19,6 +25,11 @@ export const useInterview = () => {
     const { showToast } = useNotifications()
 
     const generateReport = async ({ jobDescription, selfDescription, resumeFile }) => {
+        if (requestLocks.current.generate || loading) {
+            return null
+        }
+
+        requestLocks.current.generate = true
         setLoading(true)
 
         try {
@@ -36,16 +47,26 @@ export const useInterview = () => {
         } catch (error) {
             console.error("Generate report failed:", error)
 
-            showToast({ type: "error", message: getUserFacingError(error, "We could not generate your interview plan.") })
+            const message = error.response?.status === 503
+                ? "AI interview planning is temporarily unavailable. Please try again shortly."
+                : getUserFacingError(error, "We could not generate your interview plan.")
+
+            showToast({ type: "error", message })
 
             return null
 
         } finally {
+            requestLocks.current.generate = false
             setLoading(false)
         }
     }
 
     const getReportById = useCallback(async (interviewId) => {
+    if (requestLocks.current.reportById) {
+        return null
+    }
+
+    requestLocks.current.reportById = true
     setLoading(true)
 
     try {
@@ -60,11 +81,17 @@ export const useInterview = () => {
         showToast({ type: "error", message: getUserFacingError(error, "We could not load that interview plan.") })
         return null
     } finally {
+        requestLocks.current.reportById = false
         setLoading(false)
     }
     }, [ setLoading, setReport, showToast ])
 
     const getReports = useCallback(async () => {
+        if (requestLocks.current.reports) {
+            return []
+        }
+
+        requestLocks.current.reports = true
         setLoading(true)
         try {
             const response = await getAllInterviewReports()
@@ -77,11 +104,17 @@ export const useInterview = () => {
             setReports([])
             return []
         } finally {
+            requestLocks.current.reports = false
             setLoading(false)
         }
     }, [ setLoading, setReports, showToast ])
 
     const getResumePdf = async (interviewReportId) => {
+        if (requestLocks.current.pdf || loading) {
+            return null
+        }
+
+        requestLocks.current.pdf = true
         setLoading(true)
         try {
             const response = await generateResumePdf({ interviewReportId })
@@ -94,11 +127,14 @@ export const useInterview = () => {
             link.remove()
             window.URL.revokeObjectURL(url)
             showToast({ type: "success", message: "Your resume PDF has been downloaded." })
+            return true
         }
         catch (error) {
             console.error("Resume PDF generation failed:", error)
             showToast({ type: "error", message: getUserFacingError(error, "We could not generate the resume PDF.") })
+            return null
         } finally {
+            requestLocks.current.pdf = false
             setLoading(false)
         }
     }

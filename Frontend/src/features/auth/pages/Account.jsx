@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../hooks/useAuth"
-import "../style/account.scss"
+import "../account-page.scss"
 
 const Account = () => {
     const { user, loading, handleProfileUpdate } = useAuth()
@@ -40,7 +40,7 @@ const Account = () => {
     return (
         <main className="account-page">
             <div className="account-layout">
-                <aside className="account-summary">
+                <aside className="account-summary" aria-label="Signed-in profile">
                     <div className="account-summary__top">
                         <div className="account-summary__avatar">
                             {initial}
@@ -48,14 +48,12 @@ const Account = () => {
 
                         <div className="account-summary__badge">
                             <span />
-                            Active
+                            Account
                         </div>
                     </div>
 
                     <div className="account-summary__identity">
-                        <p className="account-summary__label">
-                            Signed in as
-                        </p>
+                        <p className="account-summary__label">PROFILE</p>
 
                         <h2>
                             {user?.username || "Candidate"}
@@ -68,29 +66,9 @@ const Account = () => {
 
                     <div className="account-summary__divider" />
 
-                    <div className="account-summary__info">
-                        <div>
-                            <span className="account-summary__info-label">
-                                Account
-                            </span>
-
-                            <strong>Personal</strong>
-                        </div>
-
-                        <div>
-                            <span className="account-summary__info-label">
-                                Status
-                            </span>
-
-                            <strong className="account-summary__active">
-                                Active
-                            </strong>
-                        </div>
-                    </div>
-
                     <div className="account-summary__status">
                         <span />
-                        Your account is secure and active
+                        Signed in to InterviewAI
                     </div>
                 </aside>
 
@@ -112,17 +90,14 @@ const Account = () => {
                             </div>
 
                             <div>
-                                <p className="account-form__kicker">
-                                    Personal details
-                                </p>
+                                <p className="account-form__kicker">PROFILE</p>
 
-                                <h2>Profile information</h2>
+                                <h2>Your details</h2>
                             </div>
                         </div>
 
                         <p className="account-form__hint">
-                            Update the details used to personalize your
-                            interview experience.
+                            Change the name and email saved with your account.
                         </p>
                     </section>
 
@@ -183,17 +158,14 @@ const Account = () => {
                             </div>
 
                             <div>
-                                <p className="account-form__kicker">
-                                    Security
-                                </p>
+                                <p className="account-form__kicker">PASSWORD</p>
 
                                 <h2>Change password</h2>
                             </div>
                         </div>
 
                         <p className="account-form__hint">
-                            Leave both fields empty if you don't want to
-                            change your password.
+                            Leave both fields empty to keep your current password.
                         </p>
                     </section>
 
@@ -285,7 +257,7 @@ const Account = () => {
                             </div>
 
                             <p>
-                                Your information is kept private and secure.
+                                Your email is used to sign in to InterviewAI.
                             </p>
                         </div>
 

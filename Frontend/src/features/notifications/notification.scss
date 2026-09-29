@@ -15,18 +15,18 @@
     gap: 0.75rem;
     padding: 1rem 0.9rem 1rem 1rem;
     border: 1px solid #dce5ed;
-    border-left: 4px solid #2c8c82;
-    border-radius: 12px;
+    border-left: 3px solid #176f63;
+    border-radius: 8px;
     background: #fff;
-    box-shadow: 0 14px 36px rgba(20, 32, 51, 0.16);
+    box-shadow: 0 10px 28px rgba(32, 53, 54, 0.13);
     pointer-events: auto;
     animation: toast-in 0.28s ease both;
 }
 
-.toast--success { border-left-color: #198754; }
-.toast--error { border-left-color: #c94b52; }
-.toast--warning { border-left-color: #c58a21; }
-.toast--info { border-left-color: #2b78ad; }
+.toast--success { border-left-color: #247a5a; }
+.toast--error { border-left-color: #b55244; }
+.toast--warning { border-left-color: #a87820; }
+.toast--info { border-left-color: #347b76; }
 .toast--closing { animation: toast-out 0.22s ease both; }
 
 .toast__icon {
@@ -41,14 +41,14 @@
     stroke-width: 2;
 }
 
-.toast--success .toast__icon { color: #198754; }
-.toast--error .toast__icon { color: #c94b52; }
-.toast--warning .toast__icon { color: #a66d0c; }
-.toast--info .toast__icon { color: #2b78ad; }
+.toast--success .toast__icon { color: #247a5a; }
+.toast--error .toast__icon { color: #b55244; }
+.toast--warning .toast__icon { color: #95691c; }
+.toast--info .toast__icon { color: #347b76; }
 
 .toast__message {
     flex: 1;
-    color: #25344a;
+    color: #203536;
     font-size: 0.86rem;
     font-weight: 700;
     line-height: 1.45;
@@ -67,7 +67,7 @@
     cursor: pointer;
 }
 
-.toast__close:hover { color: #142033; }
+.toast__close:hover { color: #203536; }
 .toast__close svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 2; }
 
 .confirmation-backdrop {
@@ -77,15 +77,15 @@
     display: grid;
     place-items: center;
     padding: 1rem;
-    background: rgba(16, 42, 67, 0.38);
+    background: rgba(32, 53, 54, 0.34);
     animation: backdrop-in 0.2s ease both;
 }
 
 .confirmation-dialog {
     width: min(100%, 430px);
     padding: 1.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border: 1px solid #dce4df;
+    border-radius: 9px;
     background: #fff;
     box-shadow: 0 22px 70px rgba(20, 32, 51, 0.22);
     animation: dialog-in 0.25s ease both;
@@ -104,8 +104,8 @@
     font-weight: 800;
 }
 
-.confirmation-dialog h2 { color: #142033; font-size: 1.2rem; }
-.confirmation-dialog p { margin-top: 0.55rem; color: #65748a; font-size: 0.9rem; line-height: 1.6; }
+.confirmation-dialog h2 { color: #203536; font-size: 1.15rem; }
+.confirmation-dialog p { margin-top: 0.55rem; color: #697a78; font-size: 0.88rem; line-height: 1.6; }
 .confirmation-dialog__actions { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 1.5rem; }
 .secondary-button { border: 1px solid #d7e0eb; background: #fff; color: #53647b; }
 .danger-button { border: 0; background: #c94b52; color: #fff; }
@@ -122,4 +122,13 @@
     .confirmation-dialog { padding: 1.35rem; }
     .confirmation-dialog__actions { flex-direction: column-reverse; }
     .confirmation-dialog__actions .button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast,
+    .toast--closing,
+    .confirmation-backdrop,
+    .confirmation-dialog {
+        animation-duration: 0.01ms;
+    }
 }

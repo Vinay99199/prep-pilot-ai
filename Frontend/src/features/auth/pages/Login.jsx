@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
-import "../auth.form.scss"
+import "../auth-pages.scss"
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../../notifications/useNotifications'
 
@@ -26,32 +26,48 @@ const Login = () => {
         }
     }
 
-    if(loading){
-        return (<main><h1>Loading.......</h1></main>)
-    }
-
-
     return (
-        <main>
-            <div className="form-container">
-                <h1>Login</h1>
+        <main className='auth-page'>
+            <section className='auth-card' aria-labelledby='auth-title'>
+                <p className='auth-card__eyebrow'>ACCOUNT ACCESS</p>
+                <h1 id='auth-title'>Sign in</h1>
+                <p className='auth-card__intro'>Use the email and password for your account.</p>
                 <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                        <label htmlFor="email">Email</label>
-                        <input
-                            onChange={(e) => { setEmail(e.target.value) }}
-                            type="email" id="email" name='email' placeholder='Enter email address' />
+                    <div className='auth-fields'>
+                        <label className='auth-field' htmlFor='email'>
+                            <span>Email address</span>
+                            <input
+                                onChange={(event) => setEmail(event.target.value)}
+                                value={email}
+                                type='email'
+                                id='email'
+                                name='email'
+                                placeholder='name@example.com'
+                                autoComplete='email'
+                                disabled={loading}
+                            />
+                        </label>
+                        <label className='auth-field' htmlFor='password'>
+                            <span>Password</span>
+                            <input
+                                onChange={(event) => setPassword(event.target.value)}
+                                value={password}
+                                type='password'
+                                id='password'
+                                name='password'
+                                placeholder='Your password'
+                                autoComplete='current-password'
+                                disabled={loading}
+                            />
+                        </label>
                     </div>
-                    <div className="input-group">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            onChange={(e) => { setPassword(e.target.value) }}
-                            type="password" id="password" name='password' placeholder='Enter password' />
-                    </div>
-                    <button className='button primary-button' >Login</button>
+                    <button className='auth-submit' type='submit' disabled={loading} aria-busy={loading}>
+                        {loading && <span className='auth-submit__spinner' aria-hidden='true' />}
+                        {loading ? 'Please wait...' : 'Log in'}
+                    </button>
                 </form>
-                <p>Don't have an account? <Link to={"/register"} >Register</Link> </p>
-            </div>
+                <p className='auth-card__switch'>New to InterviewAI? <Link to='/register'>Create an account</Link></p>
+            </section>
         </main>
     )
 }

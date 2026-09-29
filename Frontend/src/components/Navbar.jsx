@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router"
 import { useAuth } from "../features/auth/hooks/useAuth"
 
 const Navbar = () => {
-    const { user, handleLogout } = useAuth()
+    const { user, loading, handleLogout } = useAuth()
     const [ menuOpen, setMenuOpen ] = useState(false)
 
     const closeMenu = () => setMenuOpen(false)
@@ -20,15 +20,16 @@ const Navbar = () => {
                     <span className="brand__mark">IA</span>
                     <span className="brand__copy">
                         <strong>InterviewAI</strong>
-                        <small>Interview preparation, focused</small>
+                        <small>Interview prep, made practical</small>
                     </span>
                 </Link>
 
                 <button
-                    className="menu-toggle"
+                    className={`menu-toggle ${menuOpen ? "menu-toggle--open" : ""}`}
                     type="button"
                     aria-label={menuOpen ? "Close navigation" : "Open navigation"}
                     aria-expanded={menuOpen}
+                    aria-controls="site-navigation"
                     onClick={() => setMenuOpen(open => !open)}
                 >
                     <span />
@@ -36,7 +37,7 @@ const Navbar = () => {
                     <span />
                 </button>
 
-                <nav className={`site-nav ${menuOpen ? "site-nav--open" : ""}`}>
+                <nav id="site-navigation" className={`site-nav ${menuOpen ? "site-nav--open" : ""}`} aria-label="Main navigation">
                     {user ? (
                         <>
                             <NavLink className="site-nav__link" to="/" onClick={closeMenu}>
@@ -46,8 +47,8 @@ const Navbar = () => {
                                 <span className="site-nav__avatar">{user.username?.charAt(0).toUpperCase() || "U"}</span>
                                 <span>{user.username || "Candidate"}</span>
                             </NavLink>
-                            <button className="site-nav__logout" type="button" onClick={logout}>
-                                Log out
+                            <button className="site-nav__logout" type="button" onClick={logout} disabled={loading} aria-busy={loading}>
+                                {loading ? "Signing out..." : "Log out"}
                             </button>
                         </>
                     ) : (

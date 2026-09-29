@@ -2,7 +2,8 @@ import axios from "axios";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true
+    withCredentials: true,
+    timeout: 45000
 })
 
 
@@ -19,7 +20,8 @@ export const generateInterviewReport = async ({ jobDescription, selfDescription,
     const response = await api.post("/api/interview/", formData, {
         headers: {
             "Content-Type": "multipart/form-data"
-        }
+        },
+        timeout: 100000
     })
 
     return response.data

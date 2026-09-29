@@ -1,7 +1,43 @@
 
+if (!process.env.GOOGLE_GENAI_API_KEY) {
+    require("dotenv").config({
+        path: require("path").resolve(__dirname, "../../.env")
+    })
+}
+
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const puppeteer = require("puppeteer")
+
+const AI_MODELS = [
+    "gemini-3.5-flash",
+    "gemini-3.6-flash"
+]
+
+const AI_TIMEOUT_MS = 45000
+const PDF_TIMEOUT_MS = 60000
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const withTimeout = async (operation, timeoutMs, label) => {
+    let timeoutId
+
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+            reject(Object.assign(new Error(`${label} timed out after ${timeoutMs}ms`), {
+                status: 504
+            }))
+        }, timeoutMs)
+    })
+
+    try {
+        return await Promise.race([operation(), timeoutPromise])
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId)
+        }
+    }
+}
 
 console.log("AI SERVICE LOADED - MODEL: gemini-3.6-flash")
 const ai = new GoogleGenAI({
@@ -211,53 +247,38 @@ Every preparationPlan element must contain day, focus, and tasks.
 Return only the JSON object matching the provided response schema.
 `
 
-    const models = [
-        "gemini-3.5-flash",
-        "gemini-3.6-flash"
-    ]
-
     let lastError
 
-    for (const model of models) {
+    for (const model of AI_MODELS) {
 
         try {
 
-            console.log(
-                `Gemini interview request: ${model}`
+            console.log(`Gemini interview request: ${model}`)
+
+            const response = await withTimeout(
+                () => ai.models.generateContent({
+                    model,
+                    contents: prompt,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: interviewReportResponseSchema
+                    }
+                }),
+                AI_TIMEOUT_MS,
+                `Gemini interview request (${model})`
             )
 
-            const response = await ai.models.generateContent({
-                model,
-
-                contents: prompt,
-
-                config: {
-                    responseMimeType: "application/json",
-
-                    responseSchema:
-                        interviewReportResponseSchema
-                }
-            })
-
-            console.log(
-                `Gemini interview response received using ${model}`
-            )
+            console.log(`Gemini interview response received using ${model}`)
 
             const report = JSON.parse(response.text)
-
-            const validatedReport =
-                interviewReportSchema.parse(report)
+            const validatedReport = interviewReportSchema.parse(report)
 
             console.log("REPORT FIELDS:", {
                 matchScore: validatedReport.matchScore,
-                technicalQuestions:
-                    validatedReport.technicalQuestions.length,
-                behavioralQuestions:
-                    validatedReport.behavioralQuestions.length,
-                skillGaps:
-                    validatedReport.skillGaps.length,
-                preparationPlan:
-                    validatedReport.preparationPlan.length,
+                technicalQuestions: validatedReport.technicalQuestions.length,
+                behavioralQuestions: validatedReport.behavioralQuestions.length,
+                skillGaps: validatedReport.skillGaps.length,
+                preparationPlan: validatedReport.preparationPlan.length,
                 title: validatedReport.title
             })
 
@@ -267,14 +288,9 @@ Return only the JSON object matching the provided response schema.
 
             lastError = error
 
-            const status =
-                error?.status || error?.code
+            const status = error?.status || error?.code
 
-            console.error(
-                `Gemini interview error using ${model}:`,
-                status,
-                error?.message
-            )
+            console.error(`Gemini interview error using ${model}:`, status, error?.message)
 
             const retryable =
                 status === 503 ||
@@ -287,16 +303,11 @@ Return only the JSON object matching the provided response schema.
                 throw error
             }
 
-            console.log(
-                `Model ${model} unavailable. Trying fallback model...`
-            )
+            console.log(`Model ${model} unavailable. Trying fallback model...`)
         }
     }
 
-    const finalError = new Error(
-        "AI service is temporarily unavailable. Please try again later."
-    )
-
+    const finalError = new Error("AI service is temporarily unavailable. Please try again later.")
     finalError.status = 503
     finalError.cause = lastError
 
@@ -305,17 +316,17 @@ Return only the JSON object matching the provided response schema.
 
 async function generatePdfFromHtml(html) {
     let browser
+    let page
 
     try {
-        const executablePath =
-            process.env.PUPPETEER_EXECUTABLE_PATH ||
-            "/opt/render/.cache/puppeteer/chrome/linux-152.0.7977.75/chrome-linux64/chrome"
+        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined
 
-        console.log("Chrome executable:", executablePath)
+        console.log("Chrome executable:", executablePath || "default Puppeteer browser")
 
         browser = await puppeteer.launch({
             headless: true,
             executablePath,
+            timeout: 60000,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -325,10 +336,11 @@ async function generatePdfFromHtml(html) {
             ]
         })
 
-        const page = await browser.newPage()
+        page = await browser.newPage()
 
         await page.setContent(html, {
-            waitUntil: "networkidle0"
+            waitUntil: "domcontentloaded",
+            timeout: 30000
         })
 
         const pdfBuffer = await page.pdf({
@@ -346,8 +358,20 @@ async function generatePdfFromHtml(html) {
         return pdfBuffer
 
     } finally {
+        if (page) {
+            try {
+                await page.close()
+            } catch (error) {
+                console.warn("Page close failed during PDF generation:", error.message)
+            }
+        }
+
         if (browser) {
-            await browser.close()
+            try {
+                await browser.close()
+            } catch (error) {
+                console.warn("Browser close failed during PDF generation:", error.message)
+            }
         }
     }
 }
@@ -358,6 +382,14 @@ async function generateResumePdf({
     selfDescription,
     jobDescription
 }) {
+    if (!jobDescription?.trim()) {
+        throw Object.assign(new Error("Job description is required."), { status: 400 })
+    }
+
+    if (!resume?.trim() && !selfDescription?.trim()) {
+        throw Object.assign(new Error("Resume or self-description is required."), { status: 400 })
+    }
+
     const resumePdfSchema = z.object({
         html: z.string()
     })
@@ -389,72 +421,51 @@ Requirements:
 Return only valid JSON matching the provided schema.
 `
 
-    const models = [
-        "gemini-3.5-flash",
-        "gemini-3.6-flash"
-    ]
-
     let lastError
 
-    for (const model of models) {
+    for (const model of AI_MODELS) {
 
         for (let attempt = 1; attempt <= 2; attempt++) {
 
             try {
-                console.log(
-                    `Resume Gemini request: ${model} - attempt ${attempt}/2`
-                )
+                console.log(`Resume Gemini request: ${model} - attempt ${attempt}/2`)
 
-                const response = await ai.models.generateContent({
-                    model,
-
-                    contents: prompt,
-
-                    config: {
-                        responseMimeType: "application/json",
-
-                        responseSchema: {
-                            type: "object",
-                            properties: {
-                                html: {
-                                    type: "string"
-                                }
-                            },
-                            required: ["html"]
+                const response = await withTimeout(
+                    () => ai.models.generateContent({
+                        model,
+                        contents: prompt,
+                        config: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "object",
+                                properties: {
+                                    html: { type: "string" }
+                                },
+                                required: ["html"]
+                            }
                         }
-                    }
-                })
-
-                console.log(
-                    `Resume Gemini response received using ${model}`
+                    }),
+                    AI_TIMEOUT_MS,
+                    `Resume Gemini request (${model})`
                 )
+
+                console.log(`Resume Gemini response received using ${model}`)
 
                 const jsonContent = JSON.parse(response.text)
+                const validatedResume = resumePdfSchema.parse(jsonContent)
 
-                const validatedResume =
-                    resumePdfSchema.parse(jsonContent)
-
-                // Gemini successfully generated HTML.
-                // Now generate the actual PDF.
                 try {
-                    const pdfBuffer =
-                        await generatePdfFromHtml(
-                            validatedResume.html
-                        )
-
-                    console.log(
-                        `Resume PDF generated successfully using ${model}`
+                    const pdfBuffer = await withTimeout(
+                        () => generatePdfFromHtml(validatedResume.html),
+                        PDF_TIMEOUT_MS,
+                        `Resume PDF generation (${model})`
                     )
 
+                    console.log(`Resume PDF generated successfully using ${model}`)
                     return pdfBuffer
 
                 } catch (pdfError) {
-
-                    console.error(
-                        "Resume PDF generation error:",
-                        pdfError
-                    )
-
+                    console.error("Resume PDF generation error:", pdfError)
                     throw pdfError
                 }
 
@@ -462,26 +473,15 @@ Return only valid JSON matching the provided schema.
 
                 lastError = error
 
-                const status =
-                    error?.status || error?.code
+                const status = error?.status || error?.code
 
-                console.error(
-                    `Resume Gemini error: model=${model}, attempt=${attempt}/2:`,
-                    status,
-                    error?.message
-                )
+                console.error(`Resume Gemini error: model=${model}, attempt=${attempt}/2:`, status, error?.message)
 
-                // 429 = quota exceeded.
-                // Do NOT retry the same request.
                 if (status === 429) {
-                    console.log(
-                        `${model} quota exceeded. Trying next model...`
-                    )
-
+                    console.log(`${model} quota exceeded. Trying next model...`)
                     break
                 }
 
-                // Retry only temporary server/service errors.
                 const retryable =
                     status === 503 ||
                     status === 504 ||
@@ -493,30 +493,16 @@ Return only valid JSON matching the provided schema.
                 }
 
                 if (attempt < 2) {
-
-                    const delay = 2000
-
-                    console.log(
-                        `Retrying ${model} in ${delay}ms...`
-                    )
-
-                    await new Promise(resolve =>
-                        setTimeout(resolve, delay)
-                    )
+                    console.log(`Retrying ${model} in 2000ms...`)
+                    await sleep(2000)
                 }
             }
         }
 
-        console.log(
-            `Model ${model} unavailable. Trying fallback model...`
-        )
+        console.log(`Model ${model} unavailable. Trying fallback model...`)
     }
 
-    // If all models failed
-    const finalError = new Error(
-        "AI service is temporarily unavailable. Please try again later."
-    )
-
+    const finalError = new Error("AI service is temporarily unavailable. Please try again later.")
     finalError.status = 503
     finalError.cause = lastError
 

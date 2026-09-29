@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: interviewai-backend
+    env: node
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_GENAI_API_KEY
+        sync: false
+      - key: PUPPETEER_EXECUTABLE_PATH
+        sync: false

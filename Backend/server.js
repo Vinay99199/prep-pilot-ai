@@ -4,7 +4,22 @@ const connectToDB = require("./src/config/database")
 
 connectToDB()
 
+const PORT = Number(process.env.PORT) || 3000
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+})
 
-app.listen(3000, () => {
-    console.log("Server is running on port 3000")
+server.on("error", (error) => {
+    console.error("Server startup error:", error)
+    process.exit(1)
+})
+
+process.on("SIGTERM", () => {
+    console.log("Received SIGTERM, shutting down gracefully")
+    server.close(() => process.exit(0))
+})
+
+process.on("SIGINT", () => {
+    console.log("Received SIGINT, shutting down gracefully")
+    server.close(() => process.exit(0))
 })

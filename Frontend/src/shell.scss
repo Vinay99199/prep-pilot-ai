@@ -1,0 +1,228 @@
+@use "./style/button.scss";
+
+:root {
+    --paper: #f6f7f3;
+    --surface: #fff;
+    --ink: #203536;
+    --muted: #697a78;
+    --line: #dce4df;
+    --teal: #176f63;
+    --teal-dark: #10584f;
+    --teal-soft: #e9f2ed;
+    --warm: #ad5b43;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html,
+body,
+#root {
+    width: 100%;
+    min-height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+body { overflow-x: hidden; line-height: 1.5; }
+button, input, textarea { font: inherit; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(23, 111, 99, 0.28);
+    outline-offset: 3px;
+}
+
+.app-shell { display: flex; min-height: 100vh; flex-direction: column; }
+.app-shell__content { flex: 1; }
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+}
+
+.site-header__inner,
+.site-footer__inner,
+.site-footer__bottom {
+    width: min(1160px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+.site-header__inner {
+    display: flex;
+    min-height: 68px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+
+.brand__mark {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 7px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 0.69rem;
+    font-weight: 800;
+}
+
+.brand__copy { display: flex; flex-direction: column; line-height: 1.2; }
+.brand__copy strong { font-size: 0.94rem; font-weight: 750; }
+.brand__copy small { margin-top: 2px; color: var(--muted); font-size: 0.66rem; }
+.site-nav { display: flex; align-items: center; gap: 22px; }
+
+.site-nav__link,
+.site-nav__user,
+.site-nav__logout {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.site-nav__link:hover,
+.site-nav__link.active,
+.site-nav__user:hover,
+.site-nav__user.active,
+.site-nav__logout:hover:not(:disabled) { color: var(--teal-dark); }
+
+.site-nav__user { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+
+.site-nav__avatar {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid #d4e5dc;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    font-size: 0.72rem;
+}
+
+.site-nav__action {
+    padding: 8px 12px;
+    border: 1px solid var(--teal);
+    border-radius: 5px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 0.77rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.site-nav__action:hover { border-color: var(--teal-dark); background: var(--teal-dark); }
+
+.site-nav__logout {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.site-nav__logout:disabled { cursor: wait; opacity: 0.65; }
+
+.menu-toggle {
+    display: none;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.menu-toggle span { display: block; width: 17px; height: 2px; margin: 3px auto; background: var(--ink); }
+.menu-toggle--open span:first-child { transform: translateY(5px) rotate(45deg); }
+.menu-toggle--open span:nth-child(2) { opacity: 0; }
+.menu-toggle--open span:last-child { transform: translateY(-5px) rotate(-45deg); }
+
+.site-footer { margin-top: auto; padding: 34px 0 16px; background: #203536; color: #dce7e1; }
+.site-footer__inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
+.site-footer__brand { color: #fff; font-size: 0.95rem; font-weight: 750; text-decoration: none; }
+.site-footer p { max-width: 320px; margin: 7px 0 0; color: #b5c7bf; font-size: 0.77rem; line-height: 1.5; }
+.site-footer__links { display: flex; flex-wrap: wrap; gap: 20px; }
+.site-footer__links a { color: #dce7e1; font-size: 0.75rem; text-decoration: none; }
+.site-footer__links a:hover { color: #fff; text-decoration: underline; }
+
+.site-footer__bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 25px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(220, 231, 225, 0.18);
+    color: #a8bbb3;
+    font-size: 0.68rem;
+}
+
+.app-loading {
+    display: flex;
+    min-height: 55vh;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.app-loading p { margin: 0; }
+
+.app-loading__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d6e3dc;
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: shell-spin 0.75s linear infinite;
+}
+
+@keyframes shell-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 680px) {
+    .site-header__inner,
+    .site-footer__inner,
+    .site-footer__bottom { width: calc(100% - 32px); }
+
+    .site-header__inner { min-height: 62px; }
+    .brand__copy small { display: none; }
+    .menu-toggle { display: block; }
+
+    .site-nav {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 8px 16px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+        box-shadow: 0 12px 20px rgba(32, 53, 54, 0.08);
+    }
+
+    .site-nav--open { display: flex; }
+    .site-nav__link, .site-nav__user, .site-nav__logout { width: 100%; padding: 10px 0; text-align: left; }
+    .site-nav__action { width: 100%; margin-top: 5px; text-align: center; }
+    .site-footer__inner, .site-footer__bottom { flex-direction: column; }
+    .site-footer__inner { gap: 20px; }
+    .site-footer__links { gap: 15px; }
+    .site-footer__bottom { gap: 5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-toggle span, .app-loading__spinner { transition: none; animation-duration: 1.8s; }
+}

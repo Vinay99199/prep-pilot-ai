@@ -1,4 +1,4 @@
-const pdfParse = require("pdf-parse")
+const { PDFParse } = require("pdf-parse")
 const mongoose = require("mongoose")
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
@@ -49,14 +49,14 @@ async function generateInterViewReportController(req, res) {
 
         let resumeText = ""
 
-        if (req.file) {
-            const resumeContent = await (
-                new pdfParse.PDFParse(
-                    Uint8Array.from(req.file.buffer)
-                )
-            ).getText()
-
-            resumeText = resumeContent.text
+        if (req.file && req.file.buffer?.length) {
+            const parser = new PDFParse({ data: req.file.buffer })
+            try {
+                const resumeContent = await parser.getText()
+                resumeText = resumeContent?.text || ""
+            } finally {
+                await parser.destroy()
+            }
         }
 
         const interViewReportByAi = await generateInterviewReport({

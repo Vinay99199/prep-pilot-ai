@@ -11,15 +11,17 @@ const tokenBlacklistModel = require("../models/blacklist.model")
 async function registerUserController(req, res) {
 
     const { username, email, password } = req.body
+    const normalizedUsername = username?.trim()
+    const normalizedEmail = email?.trim().toLowerCase()
 
-    if (!username || !email || !password) {
+    if (!normalizedUsername || !normalizedEmail || !password) {
         return res.status(400).json({
             message: "Please provide username, email and password"
         })
     }
 
     const isUserAlreadyExists = await userModel.findOne({
-        $or: [ { username }, { email } ]
+        $or: [ { username: normalizedUsername }, { email: normalizedEmail } ]
     })
 
     if (isUserAlreadyExists) {
@@ -31,8 +33,8 @@ async function registerUserController(req, res) {
     const hash = await bcrypt.hash(password, 10)
 
     const user = await userModel.create({
-        username,
-        email,
+        username: normalizedUsername,
+        email: normalizedEmail,
         password: hash
     })
 
@@ -42,10 +44,12 @@ async function registerUserController(req, res) {
         { expiresIn: "1d" }
     )
 
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER)
+
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax"
     })
 
 
@@ -69,8 +73,15 @@ async function registerUserController(req, res) {
 async function loginUserController(req, res) {
 
     const { email, password } = req.body
+    const normalizedEmail = email?.trim().toLowerCase()
 
-    const user = await userModel.findOne({ email })
+    if (!normalizedEmail || !password) {
+        return res.status(400).json({
+            message: "Invalid email or password"
+        })
+    }
+
+    const user = await userModel.findOne({ email: normalizedEmail })
 
     if (!user) {
         return res.status(400).json({
@@ -92,10 +103,12 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     )
 
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER)
+
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax"
     })
     res.status(200).json({
         message: "User loggedIn successfully.",
@@ -120,10 +133,12 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token })
     }
 
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER)
+
     res.clearCookie("token", {
         httpOnly: true,
-        secure: true,
-        sameSite: "none"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax"
     })
 
     res.status(200).json({
