@@ -15,7 +15,7 @@ export const getUserFacingError = (error, fallback = "Something went wrong. Plea
         case 413:
             return "That file is too large. Please choose a smaller file."
         case 429:
-            return "You have reached today's limit. Please try again tomorrow."
+            return error.response.data?.message || "You have reached today's limit. Please try again tomorrow."
         case 500:
         case 502:
         case 503:

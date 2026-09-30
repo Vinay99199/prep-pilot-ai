@@ -10,8 +10,8 @@ const { z } = require("zod")
 const puppeteer = require("puppeteer")
 
 const AI_MODELS = [
-    "gemini-3.5-flash",
-    "gemini-3.6-flash"
+    "gemini-3.6-flash",
+    "gemini-3.5-flash"
 ]
 
 const AI_TIMEOUT_MS = 45000
@@ -248,6 +248,7 @@ Return only the JSON object matching the provided response schema.
 `
 
     let lastError
+    let allModelsRateLimited = true
 
     for (const model of AI_MODELS) {
 
@@ -289,6 +290,9 @@ Return only the JSON object matching the provided response schema.
             lastError = error
 
             const status = error?.status || error?.code
+            if (status !== 429) {
+                allModelsRateLimited = false
+            }
 
             console.error(`Gemini interview error using ${model}:`, status, error?.message)
 
@@ -308,7 +312,7 @@ Return only the JSON object matching the provided response schema.
     }
 
     const finalError = new Error("AI service is temporarily unavailable. Please try again later.")
-    finalError.status = 503
+    finalError.status = allModelsRateLimited ? 429 : 503
     finalError.cause = lastError
 
     throw finalError
