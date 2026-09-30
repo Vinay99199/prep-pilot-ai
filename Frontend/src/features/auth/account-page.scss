@@ -38,18 +38,16 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #697a78;
+    color: #9aa9b6;
     font-size: 0.69rem;
     font-weight: 650;
 }
 
 .account-summary__badge span,
 .account-summary__status span {
-    width: 7px;
     height: 7px;
-    flex: 0 0 7px;
     border-radius: 50%;
-    background: #247a5a;
+    background: #35c3b1;
 }
 
 .account-summary__identity { margin-top: 19px; }
@@ -244,4 +242,52 @@
 
 @media (prefers-reduced-motion: reduce) {
     .account-button__loader { animation-duration: 1.8s; }
+}
+
+.account-page {
+    --account-ink: #edf3f6;
+    --account-muted: #9aa9b6;
+    --account-line: #2c3945;
+    --account-surface: #151d26;
+    --account-accent: #35c3b1;
+    --account-accent-soft: #1b393b;
+    color: var(--account-ink);
+    animation: account-enter 0.4s ease both;
+}
+
+.account-summary { border-color: var(--account-line); }
+.account-summary__avatar,
+.account-form__icon { border-color: #315451; background: var(--account-accent-soft); color: var(--account-accent); }
+.account-summary__badge,
+.account-summary__email,
+.account-summary__status,
+.account-form__hint,
+.account-form__footer p { color: var(--account-muted); }
+.account-summary__badge span,
+.account-summary__status span { background: var(--account-accent); }
+.account-summary__label,
+.account-form__kicker { color: #82b9e8; }
+.account-summary h2,
+.account-form h2 { color: var(--account-ink); }
+.account-summary__divider { background: var(--account-line); }
+.account-form { border-color: var(--account-line); background: var(--account-surface); }
+.account-form__section,
+.account-form__footer { border-color: var(--account-line); }
+.account-form label { color: #c4d0d8; }
+.account-form input { border-color: #394754; background: #10171e; color: var(--account-ink); }
+.account-form input::placeholder { color: #71818e; }
+.account-form input:hover { border-color: #607280; }
+.account-form input:focus { border-color: var(--account-accent); background: #121b22; box-shadow: 0 0 0 3px rgba(53, 195, 177, 0.13); }
+.account-form__input--password button { color: var(--account-accent); }
+.account-form__input--password button:hover { color: #80e3d7; }
+.account-form__secure-icon { background: var(--account-accent-soft); color: var(--account-accent); }
+.account-form__footer .button { border-color: var(--account-accent); background: var(--account-accent); color: #08211f; transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+.account-form__footer .button:hover:not(:disabled) { border-color: #53d4c3; background: #53d4c3; transform: translateY(-1px); }
+.account-form__footer .button:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.account-button__loader { border-color: rgba(8, 33, 31, 0.32); border-top-color: #08211f; }
+
+@keyframes account-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .account-page { animation: none; }
 }

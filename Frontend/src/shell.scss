@@ -1,15 +1,19 @@
 @use "./style/button.scss";
 
 :root {
-    --paper: #f6f7f3;
-    --surface: #fff;
-    --ink: #203536;
-    --muted: #697a78;
-    --line: #dce4df;
-    --teal: #176f63;
-    --teal-dark: #10584f;
-    --teal-soft: #e9f2ed;
-    --warm: #ad5b43;
+    color-scheme: dark;
+    --paper: #10161d;
+    --surface: #171f28;
+    --surface-raised: #1d2732;
+    --ink: #eef3f6;
+    --muted: #9aa9b6;
+    --line: #2c3945;
+    --teal: #35c3b1;
+    --teal-dark: #28a997;
+    --teal-soft: #1b393b;
+    --blue-soft: #222e42;
+    --warm: #82b9e8;
+    --danger: #ee807c;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +35,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(23, 111, 99, 0.28);
+    outline: 3px solid rgba(53, 195, 177, 0.42);
     outline-offset: 3px;
 }
 
@@ -43,7 +47,15 @@ textarea:focus-visible {
     top: 0;
     z-index: 20;
     border-bottom: 1px solid var(--line);
-    background: var(--paper);
+    background: rgba(16, 22, 29, 0.88);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    backdrop-filter: blur(12px);
+}
+
+.site-header--scrolled {
+    border-color: #35434f;
+    background: rgba(12, 17, 23, 0.98);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
 }
 
 .site-header__inner,
@@ -70,7 +82,7 @@ textarea:focus-visible {
     place-items: center;
     border-radius: 7px;
     background: var(--teal);
-    color: #fff;
+    color: #08211f;
     font-size: 0.69rem;
     font-weight: 800;
 }
@@ -102,7 +114,7 @@ textarea:focus-visible {
     width: 28px;
     height: 28px;
     place-items: center;
-    border: 1px solid #d4e5dc;
+    border: 1px solid #315451;
     border-radius: 50%;
     background: var(--teal-soft);
     color: var(--teal-dark);
@@ -114,7 +126,7 @@ textarea:focus-visible {
     border: 1px solid var(--teal);
     border-radius: 5px;
     background: var(--teal);
-    color: #fff;
+    color: #08211f;
     font-size: 0.77rem;
     font-weight: 700;
     text-decoration: none;
@@ -143,15 +155,15 @@ textarea:focus-visible {
     cursor: pointer;
 }
 
-.menu-toggle span { display: block; width: 17px; height: 2px; margin: 3px auto; background: var(--ink); }
+.menu-toggle span { display: block; width: 17px; height: 2px; margin: 3px auto; background: var(--ink); transition: transform 0.18s ease, opacity 0.18s ease; }
 .menu-toggle--open span:first-child { transform: translateY(5px) rotate(45deg); }
 .menu-toggle--open span:nth-child(2) { opacity: 0; }
 .menu-toggle--open span:last-child { transform: translateY(-5px) rotate(-45deg); }
 
-.site-footer { margin-top: auto; padding: 34px 0 16px; background: #203536; color: #dce7e1; }
+.site-footer { margin-top: auto; padding: 34px 0 16px; border-top: 1px solid var(--line); background: #0c1117; color: #dce7e1; }
 .site-footer__inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
 .site-footer__brand { color: #fff; font-size: 0.95rem; font-weight: 750; text-decoration: none; }
-.site-footer p { max-width: 320px; margin: 7px 0 0; color: #b5c7bf; font-size: 0.77rem; line-height: 1.5; }
+.site-footer p { max-width: 320px; margin: 7px 0 0; color: #96a5b0; font-size: 0.77rem; line-height: 1.5; }
 .site-footer__links { display: flex; flex-wrap: wrap; gap: 20px; }
 .site-footer__links a { color: #dce7e1; font-size: 0.75rem; text-decoration: none; }
 .site-footer__links a:hover { color: #fff; text-decoration: underline; }
@@ -162,8 +174,8 @@ textarea:focus-visible {
     gap: 16px;
     margin-top: 25px;
     padding-top: 12px;
-    border-top: 1px solid rgba(220, 231, 225, 0.18);
-    color: #a8bbb3;
+    border-top: 1px solid rgba(154, 169, 182, 0.18);
+    color: #84939f;
     font-size: 0.68rem;
 }
 
@@ -182,7 +194,7 @@ textarea:focus-visible {
 .app-loading__spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #d6e3dc;
+    border: 2px solid #34434e;
     border-top-color: var(--teal);
     border-radius: 50%;
     animation: shell-spin 0.75s linear infinite;
@@ -211,7 +223,7 @@ textarea:focus-visible {
         padding: 8px 16px 14px;
         border-bottom: 1px solid var(--line);
         background: var(--paper);
-        box-shadow: 0 12px 20px rgba(32, 53, 54, 0.08);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.24);
     }
 
     .site-nav--open { display: flex; }
@@ -224,5 +236,5 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .menu-toggle span, .app-loading__spinner { transition: none; animation-duration: 1.8s; }
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }

@@ -4,28 +4,29 @@
     min-height: calc(100vh - 68px);
     place-items: center;
     padding: 48px 24px;
-    background: #f6f7f3;
+    background: #10161d;
 }
 
 .auth-card {
     width: min(100%, 430px);
     padding: 34px;
-    border: 1px solid #dce4df;
-    border-radius: 9px;
-    background: #fff;
-    box-shadow: 0 10px 28px rgba(32, 53, 54, 0.055);
+    border: 1px solid #2c3945;
+    border-radius: 8px;
+    background: #151d26;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2);
+    animation: auth-enter 0.38s ease both;
 }
 
 .auth-card__eyebrow {
     margin: 0 0 11px;
-    color: #ad5b43;
+    color: #82b9e8;
     font-size: 0.68rem;
     font-weight: 750;
 }
 
 .auth-card h1 {
     margin: 0;
-    color: #203536;
+    color: #edf3f6;
     font-family: Georgia, "Times New Roman", serif;
     font-size: 32px;
     font-weight: 500;
@@ -34,7 +35,7 @@
 
 .auth-card__intro {
     margin: 9px 0 25px;
-    color: #697a78;
+    color: #9aa9b6;
     font-size: 0.86rem;
     line-height: 1.55;
 }
@@ -52,7 +53,7 @@
 .auth-field {
     display: grid;
     gap: 7px;
-    color: #354c4a;
+    color: #c4d0d8;
     font-size: 0.75rem;
     font-weight: 700;
 }
@@ -61,27 +62,27 @@
     width: 100%;
     min-height: 45px;
     padding: 10px 12px;
-    border: 1px solid #cfdad5;
+    border: 1px solid #394754;
     border-radius: 6px;
     outline: none;
-    background: #fcfdfa;
-    color: #203536;
+    background: #10171e;
+    color: #edf3f6;
     font: inherit;
     font-size: 0.85rem;
     font-weight: 400;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
-.auth-field input::placeholder { color: #899794; }
-.auth-field input:hover:not(:disabled) { border-color: #aebfba; }
+.auth-field input::placeholder { color: #71818e; }
+.auth-field input:hover:not(:disabled) { border-color: #607280; }
 
 .auth-field input:focus {
-    border-color: #176f63;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(23, 111, 99, 0.1);
+    border-color: #35c3b1;
+    background: #121b22;
+    box-shadow: 0 0 0 3px rgba(53, 195, 177, 0.13);
 }
 
-.auth-field input:disabled { color: #788783; cursor: wait; }
+.auth-field input:disabled { color: #82919c; cursor: wait; }
 
 .auth-submit {
     display: inline-flex;
@@ -90,18 +91,19 @@
     justify-content: center;
     gap: 9px;
     padding: 0 16px;
-    border: 1px solid #176f63;
+    border: 1px solid #35c3b1;
     border-radius: 6px;
-    background: #176f63;
-    color: #fff;
+    background: #35c3b1;
+    color: #08211f;
     cursor: pointer;
     font: inherit;
     font-size: 0.83rem;
     font-weight: 700;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.auth-submit:hover:not(:disabled) { border-color: #10584f; background: #10584f; }
+.auth-submit:hover:not(:disabled) { border-color: #53d4c3; background: #53d4c3; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(17, 165, 149, 0.17); }
+.auth-submit:active:not(:disabled) { transform: translateY(0) scale(0.985); }
 .auth-submit:disabled { cursor: wait; opacity: 0.7; }
 
 .auth-submit__spinner {
@@ -118,19 +120,21 @@
 .auth-card__switch {
     margin: 22px 0 0;
     padding-top: 17px;
-    border-top: 1px solid #e6ebe7;
-    color: #697a78;
+    border-top: 1px solid #2c3945;
+    color: #9aa9b6;
     font-size: 0.77rem;
     text-align: center;
 }
 
 .auth-card__switch a {
-    color: #176f63;
+    color: #55d3c3;
     font-weight: 700;
     text-decoration: none;
 }
 
-.auth-card__switch a:hover { color: #10584f; text-decoration: underline; }
+.auth-card__switch a:hover { color: #80e3d7; text-decoration: underline; }
+
+@keyframes auth-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 520px) {
     .auth-page { min-height: calc(100vh - 68px); padding: 28px 16px; }
@@ -139,5 +143,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .auth-card { animation: none; }
     .auth-submit__spinner { animation-duration: 1.8s; }
 }

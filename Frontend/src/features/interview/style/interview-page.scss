@@ -1,12 +1,12 @@
 .interview-page {
-    --report-surface: #fff;
-    --report-ink: #203536;
-    --report-muted: #697a78;
-    --report-line: #dce4df;
-    --report-accent: #176f63;
-    --report-accent-dark: #10584f;
-    --report-soft: #e9f2ed;
-    --report-warm: #ad5b43;
+    --report-surface: #151d26;
+    --report-ink: #edf3f6;
+    --report-muted: #9aa9b6;
+    --report-line: #2c3945;
+    --report-accent: #35c3b1;
+    --report-accent-dark: #48b8aa;
+    --report-soft: #1b393b;
+    --report-warm: #82b9e8;
 
     width: min(1220px, calc(100% - 48px));
     min-height: calc(100vh - 68px);
@@ -14,6 +14,7 @@
     padding: 36px 0 64px;
     color: var(--report-ink);
     font-family: "Avenir Next", "Segoe UI", sans-serif;
+    animation: report-enter 0.4s ease both;
 
     .report-header {
         display: flex;
@@ -92,22 +93,23 @@
         border: 1px solid var(--report-accent);
         border-radius: 6px;
         background: var(--report-accent);
-        color: #fff;
+        color: #08211f;
         cursor: pointer;
         font: inherit;
         font-size: 0.77rem;
         font-weight: 700;
-        transition: background-color 0.15s ease;
+        transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
     }
 
-    .report-download:hover { background: var(--report-accent-dark); }
+    .report-download:hover:not(:disabled) { border-color: #53d4c3; background: #53d4c3; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(17, 165, 149, 0.17); }
+    .report-download:active:not(:disabled) { transform: translateY(0) scale(0.985); }
     .report-download:disabled { cursor: wait; opacity: 0.7; }
 
     .report-download__spinner {
         width: 15px;
         height: 15px;
-        border: 2px solid rgba(255, 255, 255, 0.45);
-        border-top-color: #fff;
+        border: 2px solid rgba(8, 33, 31, 0.32);
+        border-top-color: #08211f;
         border-radius: 50%;
         animation: report-spin 0.75s linear infinite;
     }
@@ -128,7 +130,7 @@
         padding: 4px;
         border: 1px solid var(--report-line);
         border-radius: 7px;
-        background: #f0f3ef;
+        background: #121922;
     }
 
     .report-tabs__item {
@@ -164,10 +166,10 @@
     .report-tabs__item:hover { color: var(--report-accent-dark); }
 
     .report-tabs__item--active {
-        border-color: #d6e0da;
-        background: #fff;
+        border-color: #3a4a56;
+        background: #202b35;
         color: var(--report-accent-dark);
-        box-shadow: 0 1px 2px rgba(32, 53, 54, 0.04);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
     }
 
     .report-section { padding-top: 27px; }
@@ -209,7 +211,7 @@
         overflow: hidden;
         border: 1px solid var(--report-line);
         border-radius: 7px;
-        background: #fff;
+        background: var(--report-surface);
     }
 
     .q-card__trigger {
@@ -228,14 +230,14 @@
         text-align: left;
     }
 
-    .q-card__trigger:hover { background: #fafbf9; }
+    .q-card__trigger:hover { background: #1b2530; }
 
     .q-card__index {
         display: grid;
         width: 31px;
         height: 29px;
         place-items: center;
-        border: 1px solid #d5e3da;
+        border: 1px solid #315451;
         border-radius: 5px;
         background: var(--report-soft);
         color: var(--report-accent-dark);
@@ -256,7 +258,7 @@
         width: 18px;
         height: 18px;
         fill: none;
-        stroke: #788783;
+        stroke: #82919c;
         stroke-linecap: round;
         stroke-linejoin: round;
         stroke-width: 1.8;
@@ -270,7 +272,7 @@
         gap: 16px;
         padding: 16px 18px 18px 61px;
         border-top: 1px solid var(--report-line);
-        background: #fcfdfa;
+        background: #111920;
     }
 
     .q-card__body[hidden] { display: none; }
@@ -278,7 +280,7 @@
 
     .q-card__section p {
         margin: 0;
-        color: #536663;
+        color: #bdc8cf;
         font-size: 0.8rem;
         line-height: 1.65;
     }
@@ -291,7 +293,7 @@
 
     .report-empty {
         padding: 24px 18px;
-        border: 1px dashed #cad7d0;
+        border: 1px dashed #394754;
         border-radius: 7px;
         color: var(--report-muted);
         font-size: 0.8rem;
@@ -304,7 +306,7 @@
     .roadmap-list {
         display: grid;
         gap: 0;
-        border-left: 1px solid #cadbd1;
+        border-left: 1px solid #3a5553;
     }
 
     .roadmap-day {
@@ -322,7 +324,7 @@
         height: 9px;
         border: 1px solid var(--report-accent);
         border-radius: 50%;
-        background: #fff;
+        background: #151d26;
         content: "";
     }
 
@@ -387,13 +389,14 @@
         align-items: center;
         justify-content: center;
         gap: 2px;
-        border: 4px solid #d7e7dd;
+        border: 4px solid #326f68;
         border-radius: 50%;
         color: var(--report-accent-dark);
     }
 
-    .report-score__ring.score--mid { border-color: #e6d8ad; color: #8a651c; }
-    .report-score__ring.score--low { border-color: #e7c8bd; color: #9b4f39; }
+    .report-score__ring.score--mid { border-color: #9a7840; color: #e6b85c; }
+    .report-score__ring.score--low { border-color: #89504f; color: #ee807c; }
+    .report-score__ring { animation: score-enter 0.5s ease both; }
     .report-score__ring span { font-size: 1.5rem; font-weight: 750; line-height: 1; }
     .report-score__ring small { align-self: center; font-size: 0.68rem; }
 
@@ -427,13 +430,13 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        color: #405553;
+        color: #c4d0d8;
         font-size: 0.75rem;
     }
 
     .skill-tag {
         padding: 3px 6px;
-        border: 1px solid #d7e7dd;
+        border: 1px solid #315451;
         border-radius: 4px;
         background: var(--report-soft);
         color: var(--report-accent-dark);
@@ -442,8 +445,8 @@
         text-transform: capitalize;
     }
 
-    .skill-tag--medium { border-color: #e6d8ad; background: #f8f3e5; color: #8a651c; }
-    .skill-tag--high { border-color: #e7c8bd; background: #f8eee9; color: #9b4f39; }
+    .skill-tag--medium { border-color: #705b39; background: #302a1d; color: #e6b85c; }
+    .skill-tag--high { border-color: #684745; background: #302222; color: #ee807c; }
 }
 
 .report-state {
@@ -452,23 +455,35 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    color: #697a78;
+    color: #9aa9b6;
     font-size: 0.85rem;
 }
 
 .report-state p { margin: 0; }
-.report-state a { color: #176f63; font-size: 0.78rem; font-weight: 700; }
+.report-state a { color: #55d3c3; font-size: 0.78rem; font-weight: 700; }
 
 .report-state__spinner {
     width: 17px;
     height: 17px;
-    border: 2px solid #d6e3dc;
-    border-top-color: #176f63;
+    border: 2px solid #34434e;
+    border-top-color: #35c3b1;
     border-radius: 50%;
     animation: report-spin 0.75s linear infinite;
 }
 
 @keyframes report-spin { to { transform: rotate(360deg); } }
+@keyframes report-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes score-enter { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes report-reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.interview-page .q-card,
+.interview-page .roadmap-day { animation: report-reveal 0.32s ease both; }
+.interview-page .q-card:nth-child(2),
+.interview-page .roadmap-day:nth-child(2) { animation-delay: 0.04s; }
+.interview-page .q-card:nth-child(3),
+.interview-page .roadmap-day:nth-child(3) { animation-delay: 0.08s; }
+.interview-page .q-card:nth-child(4),
+.interview-page .roadmap-day:nth-child(4) { animation-delay: 0.12s; }
 
 @media (max-width: 860px) {
     .interview-page {
@@ -509,6 +524,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .interview-page,
+    .interview-page .q-card,
+    .interview-page .roadmap-day,
+    .interview-page .report-score__ring { animation: none; }
     .interview-page .q-card__chevron,
     .report-state__spinner { transition: none; animation-duration: 1.8s; }
 }

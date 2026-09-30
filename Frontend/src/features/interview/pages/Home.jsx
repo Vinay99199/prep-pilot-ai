@@ -10,10 +10,41 @@ const Home = () => {
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
     const [ resumeName, setResumeName ] = useState("")
+    const [ isResumeDragging, setIsResumeDragging ] = useState(false)
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
     const { showToast, requestConfirmation } = useNotifications()
+
+    const handleResumeSelection = (file) => {
+        if (!file) return
+        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+            resumeInputRef.current.value = ''
+            setResumeName('')
+            showToast({ type: "error", message: "Please choose a PDF file." })
+            return
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            resumeInputRef.current.value = ''
+            setResumeName('')
+            showToast({ type: "error", message: "The PDF must be smaller than 3 MB." })
+            return
+        }
+        setResumeName(file.name)
+        showToast({ type: "success", message: "Resume added." })
+    }
+
+    const handleResumeDrop = (event) => {
+        event.preventDefault()
+        setIsResumeDragging(false)
+        const file = event.dataTransfer.files?.[0]
+        if (!file) return
+
+        const transfer = new DataTransfer()
+        transfer.items.add(file)
+        resumeInputRef.current.files = transfer.files
+        handleResumeSelection(file)
+    }
 
     const handleGenerateReport = async () => {
 
@@ -115,7 +146,16 @@ const Home = () => {
 
                         <div className='upload-section'>
                             <span className='section-label'>Resume <span className='optional-label'>Optional</span></span>
-                            <label className={`dropzone ${resumeName ? 'dropzone--selected' : ''}`} htmlFor='resume'>
+                            <label
+                                className={`dropzone ${resumeName ? 'dropzone--selected' : ''} ${isResumeDragging ? 'dropzone--dragging' : ''}`}
+                                htmlFor='resume'
+                                onDragEnter={(event) => { event.preventDefault(); setIsResumeDragging(true) }}
+                                onDragOver={(event) => { event.preventDefault(); setIsResumeDragging(true) }}
+                                onDragLeave={(event) => {
+                                    if (!event.currentTarget.contains(event.relatedTarget)) setIsResumeDragging(false)
+                                }}
+                                onDrop={handleResumeDrop}
+                            >
                                 <span className='dropzone__icon' aria-hidden='true'>
                                     {resumeName ? (
                                         <svg viewBox='0 0 24 24'><path d='m5 12 4 4L19 6' /></svg>
@@ -135,24 +175,7 @@ const Home = () => {
                                     id='resume'
                                     name='resume'
                                     accept='.pdf,application/pdf'
-                                    onChange={(event) => {
-                                        const file = event.target.files?.[0]
-                                        if (!file) return
-                                        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-                                            event.target.value = ''
-                                            setResumeName('')
-                                            showToast({ type: "error", message: "Please choose a PDF file." })
-                                            return
-                                        }
-                                        if (file.size > 3 * 1024 * 1024) {
-                                            event.target.value = ''
-                                            setResumeName('')
-                                            showToast({ type: "error", message: "The PDF must be smaller than 3 MB." })
-                                            return
-                                        }
-                                        setResumeName(file.name)
-                                        showToast({ type: "success", message: "Resume added." })
-                                    }}
+                                    onChange={(event) => handleResumeSelection(event.target.files?.[0])}
                                 />
                             </label>
                             <p className='upload-note'>PDF files only. Choose a file from your device.</p>

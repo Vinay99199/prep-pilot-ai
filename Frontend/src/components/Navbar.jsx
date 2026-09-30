@@ -1,10 +1,18 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, NavLink } from "react-router"
 import { useAuth } from "../features/auth/hooks/useAuth"
 
 const Navbar = () => {
     const { user, loading, handleLogout } = useAuth()
     const [ menuOpen, setMenuOpen ] = useState(false)
+    const [ scrolled, setScrolled ] = useState(false)
+
+    useEffect(() => {
+        const updateScrollState = () => setScrolled(window.scrollY > 8)
+        updateScrollState()
+        window.addEventListener("scroll", updateScrollState, { passive: true })
+        return () => window.removeEventListener("scroll", updateScrollState)
+    }, [])
 
     const closeMenu = () => setMenuOpen(false)
 
@@ -14,7 +22,7 @@ const Navbar = () => {
     }
 
     return (
-        <header className="site-header">
+        <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
             <div className="site-header__inner">
                 <Link className="brand" to={user ? "/" : "/login"} onClick={closeMenu}>
                     <span className="brand__mark">IA</span>
