@@ -88,7 +88,7 @@ async function generateInterViewReportController(req, res) {
 
         if (error.status === 429) {
             return res.status(429).json({
-                message: "OpenAI rate limit reached. Please try again shortly."
+                message: "Gemini API rate limit reached. Please try again shortly."
             })
         }
 
@@ -106,7 +106,7 @@ async function generateInterViewReportController(req, res) {
 
         if (error.status === 502) {
             return res.status(502).json({
-                message: "The AI service returned an invalid response. Please try again."
+                message: "Gemini returned an invalid response. Please try again."
             })
         }
 
@@ -213,7 +213,7 @@ async function generateResumePdfController(req, res) {
         }
 
         // If PDF already exists, download it directly.
-        // The AI service will not be called.
+        // Gemini will not be called.
         if (interviewReport.resumePdf?.length) {
 
             res.set({
@@ -255,7 +255,7 @@ async function generateResumePdfController(req, res) {
 
         if (error.status === 429) {
             return res.status(429).json({
-                message: "OpenAI rate limit reached. Please try again shortly."
+                message: "Gemini API rate limit reached. Please try again shortly."
             })
         }
 
@@ -273,7 +273,7 @@ async function generateResumePdfController(req, res) {
 
         if (error.status === 502) {
             return res.status(502).json({
-                message: "The AI service returned an invalid response. Please try again."
+                message: "Gemini returned an invalid response. Please try again."
             })
         }
 

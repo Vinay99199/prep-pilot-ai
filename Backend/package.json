@@ -16,6 +16,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/genai": "^2.26.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -24,7 +25,6 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.8.1",
     "multer": "^2.3.0",
-    "openai": "^7.27.0",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^25.10.0",
     "zod": "^4.6.1",

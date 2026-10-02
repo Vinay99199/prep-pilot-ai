@@ -19,9 +19,9 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: OPENAI_API_KEY
+      - key: GOOGLE_GENAI_API_KEY
         sync: false
-      - key: OPENAI_MODEL
-        value: gpt-5.4-mini
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
       - key: PUPPETEER_EXECUTABLE_PATH
         sync: false

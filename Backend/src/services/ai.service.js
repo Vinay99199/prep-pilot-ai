@@ -1,16 +1,16 @@
 
-const OpenAI = require("openai")
+const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const puppeteer = require("puppeteer")
 
-const DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
-const AI_TIMEOUT_MS = 40000
+const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+const AI_TIMEOUT_MS = 45000
 const PDF_TIMEOUT_MS = 60000
 const MAX_AI_ATTEMPTS = 2
 const RETRY_DELAY_MS = 1000
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-let openai
+let gemini
 
 const withTimeout = async (operation, timeoutMs, label) => {
     let timeoutId
@@ -32,22 +32,18 @@ const withTimeout = async (operation, timeoutMs, label) => {
     }
 }
 
-function getOpenAIClient() {
-    const apiKey = process.env.OPENAI_API_KEY?.trim()
+function getGeminiClient() {
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY?.trim()
 
     if (!apiKey) {
-        throw createAiError("OPENAI_API_KEY is not configured.", 503, null, "OPENAI_CONFIG")
+        throw createAiError("GOOGLE_GENAI_API_KEY is not configured.", 503, null, "GEMINI_CONFIG")
     }
 
-    if (!openai) {
-        openai = new OpenAI({
-            apiKey,
-            timeout: AI_TIMEOUT_MS,
-            maxRetries: 0
-        })
+    if (!gemini) {
+        gemini = new GoogleGenAI({ apiKey })
     }
 
-    return openai
+    return gemini
 }
 
 function createAiError(message, status, cause, code) {
@@ -65,7 +61,7 @@ function isTimeoutError(error) {
         [ "ETIMEDOUT", "ECONNABORTED" ].includes(error?.code)
 }
 
-function normalizeOpenAIError(error) {
+function normalizeGeminiError(error) {
     if (error?.isAiServiceError) {
         return error
     }
@@ -73,70 +69,67 @@ function normalizeOpenAIError(error) {
     const status = Number(error?.status || error?.statusCode)
 
     if (status === 401 || status === 403) {
-        return createAiError("OpenAI authentication failed. Check OPENAI_API_KEY.", 503, error, "OPENAI_AUTH")
+        return createAiError("Gemini authentication failed. Check GOOGLE_GENAI_API_KEY.", 503, error, "GEMINI_AUTH")
     }
 
     if (status === 429) {
-        return createAiError("OpenAI rate limit reached. Please try again shortly.", 429, error, "OPENAI_RATE_LIMIT")
+        return createAiError("Gemini rate limit reached. Please try again shortly.", 429, error, "GEMINI_RATE_LIMIT")
     }
 
     if (isTimeoutError(error)) {
-        return createAiError("OpenAI request timed out.", 504, error, "OPENAI_TIMEOUT")
+        return createAiError("Gemini request timed out.", 504, error, "GEMINI_TIMEOUT")
     }
 
-    if (!status || status >= 500) {
-        return createAiError("OpenAI service is temporarily unavailable.", 503, error, "OPENAI_UNAVAILABLE")
+    if (status === 504) {
+        return createAiError("Gemini request timed out.", 504, error, "GEMINI_TIMEOUT")
     }
 
-    return createAiError("OpenAI returned an unexpected response.", 502, error, "OPENAI_RESPONSE_ERROR")
+    if (status === 503 || !status || status >= 500) {
+        return createAiError("Gemini service is temporarily unavailable.", 503, error, "GEMINI_UNAVAILABLE")
+    }
+
+    return createAiError("Gemini returned an unexpected response.", 502, error, "GEMINI_RESPONSE_ERROR")
 }
 
-async function createStructuredResponse({ name, schema, instructions, prompt, maxOutputTokens }) {
-    const client = getOpenAIClient()
+async function createGeminiStructuredResponse({ name, schema, prompt }) {
     let lastError
 
     for (let attempt = 1; attempt <= MAX_AI_ATTEMPTS; attempt++) {
         try {
-            console.log(`OpenAI ${name} request: ${process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL} - attempt ${attempt}/${MAX_AI_ATTEMPTS}`)
+            const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL
+            console.log(`Gemini ${name} request: ${model} - attempt ${attempt}/${MAX_AI_ATTEMPTS}`)
 
-            const response = await client.responses.create({
-                model: process.env.OPENAI_MODEL?.trim() || DEFAULT_OPENAI_MODEL,
-                input: [
-                    { role: "system", content: instructions },
-                    { role: "user", content: prompt }
-                ],
-                text: {
-                    format: {
-                        type: "json_schema",
-                        name,
-                        schema,
-                        strict: true
+            const response = await withTimeout(
+                () => getGeminiClient().models.generateContent({
+                    model,
+                    contents: prompt,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: schema
                     }
-                },
-                max_output_tokens: maxOutputTokens
-            })
+                }),
+                AI_TIMEOUT_MS,
+                `Gemini ${name} request (${model})`
+            )
 
-            if (response.status !== "completed" || !response.output_text) {
-                throw createAiError("OpenAI returned incomplete or empty structured output.", 502, null, "OPENAI_INVALID_OUTPUT")
+            if (!response.text) {
+                throw createAiError("Gemini returned empty structured output.", 502, null, "GEMINI_INVALID_OUTPUT")
             }
 
-            return response.output_text
+            return response.text
 
         } catch (error) {
-            lastError = normalizeOpenAIError(error)
-            const apiStatus = Number(error?.status || error?.statusCode)
+            lastError = normalizeGeminiError(error)
             const retryable = !error?.isAiServiceError &&
-                apiStatus !== 401 &&
-                apiStatus !== 403 &&
-                (apiStatus === 429 || isTimeoutError(error) || apiStatus >= 500 || !apiStatus)
+                [429, 503, 504].includes(lastError.status)
 
-            console.error(`OpenAI ${name} error on attempt ${attempt}/${MAX_AI_ATTEMPTS}:`, lastError.status, lastError.message)
+            console.error(`Gemini ${name} error on attempt ${attempt}/${MAX_AI_ATTEMPTS}:`, lastError.status, error?.message)
 
             if (!retryable || attempt === MAX_AI_ATTEMPTS) {
                 throw lastError
             }
 
-            console.log(`Retrying OpenAI ${name} in ${RETRY_DELAY_MS}ms...`)
+            console.log(`Retrying Gemini ${name} in ${RETRY_DELAY_MS}ms...`)
             await sleep(RETRY_DELAY_MS)
         }
     }
@@ -144,11 +137,11 @@ async function createStructuredResponse({ name, schema, instructions, prompt, ma
     throw lastError
 }
 
-function parseStructuredOutput(text, schema, outputName) {
+function parseGeminiOutput(text, schema, outputName) {
     try {
         return schema.parse(JSON.parse(text))
     } catch (error) {
-        throw createAiError(`OpenAI returned invalid ${outputName} data.`, 502, error, "OPENAI_INVALID_OUTPUT")
+        throw createAiError(`Gemini returned invalid ${outputName} data.`, 502, error, "GEMINI_INVALID_OUTPUT")
     }
 }
 
@@ -360,14 +353,12 @@ Every preparationPlan element must contain day, focus, and tasks.
 Return only the JSON object matching the provided response schema.
 `
 
-    const responseText = await createStructuredResponse({
+    const responseText = await createGeminiStructuredResponse({
         name: "interview_report",
         schema: interviewReportResponseSchema,
-        instructions: "You are an expert technical interviewer and career coach. Return a complete interview preparation report that follows the supplied JSON schema exactly.",
         prompt,
-        maxOutputTokens: 7000
     })
-    const validatedReport = parseStructuredOutput(responseText, interviewReportSchema, "interview report")
+    const validatedReport = parseGeminiOutput(responseText, interviewReportSchema, "interview report")
 
     console.log("REPORT FIELDS:", {
         matchScore: validatedReport.matchScore,
@@ -497,14 +488,12 @@ Requirements:
 Return only valid JSON matching the provided schema.
 `
 
-    const responseText = await createStructuredResponse({
+    const responseText = await createGeminiStructuredResponse({
         name: "resume_html",
         schema: resumePdfResponseSchema,
-        instructions: "You are an expert resume writer. Generate a complete, professional ATS-friendly HTML resume, and return it in the supplied JSON schema.",
         prompt,
-        maxOutputTokens: 7000
     })
-    const validatedResume = parseStructuredOutput(responseText, resumePdfSchema, "resume HTML")
+    const validatedResume = parseGeminiOutput(responseText, resumePdfSchema, "resume HTML")
     const html = validateResumeHtml(validatedResume.html)
 
     try {
@@ -514,7 +503,7 @@ Return only valid JSON matching the provided schema.
             "Resume PDF generation"
         )
 
-        console.log("Resume PDF generated successfully using OpenAI and Puppeteer")
+        console.log("Resume PDF generated successfully using Gemini and Puppeteer")
         return pdfBuffer
 
     } catch (pdfError) {
@@ -535,7 +524,7 @@ function validateResumeHtml(html) {
         /@import\b|url\(\s*["']?\s*(?:https?:|\/\/|file:)/i.test(document)
 
     if (!hasDocumentStructure || containsUnsafeMarkup || document.length > 500000) {
-        throw createAiError("OpenAI returned invalid or unsafe resume HTML.", 502, null, "OPENAI_INVALID_HTML")
+        throw createAiError("Gemini returned invalid or unsafe resume HTML.", 502, null, "GEMINI_INVALID_HTML")
     }
 
     return document
