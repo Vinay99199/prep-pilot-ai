@@ -1,6 +1,7 @@
 # Environment variables and secrets
 .env
 .env.*
+!Backend/.env.example
 
 
 # Dependencies and build output

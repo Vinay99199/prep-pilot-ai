@@ -88,19 +88,25 @@ async function generateInterViewReportController(req, res) {
 
         if (error.status === 429) {
             return res.status(429).json({
-                message: "Gemini API quota exceeded. Please try again later."
+                message: "OpenAI rate limit reached. Please try again shortly."
             })
         }
 
         if (error.status === 503) {
             return res.status(503).json({
-                message: "Gemini AI service is temporarily unavailable. Please try again."
+                message: "AI service is temporarily unavailable. Please try again."
             })
         }
 
         if (error.status === 504) {
             return res.status(504).json({
                 message: "The interview report took too long to generate. Please try again."
+            })
+        }
+
+        if (error.status === 502) {
+            return res.status(502).json({
+                message: "The AI service returned an invalid response. Please try again."
             })
         }
 
@@ -207,7 +213,7 @@ async function generateResumePdfController(req, res) {
         }
 
         // If PDF already exists, download it directly.
-        // Gemini will NOT be called.
+        // The AI service will not be called.
         if (interviewReport.resumePdf?.length) {
 
             res.set({
@@ -249,19 +255,25 @@ async function generateResumePdfController(req, res) {
 
         if (error.status === 429) {
             return res.status(429).json({
-                message: "Gemini API quota exceeded. Please try again later."
+                message: "OpenAI rate limit reached. Please try again shortly."
             })
         }
 
         if (error.status === 503) {
             return res.status(503).json({
-                message: "Gemini AI service is temporarily unavailable. Please try again."
+                message: "AI service is temporarily unavailable. Please try again."
             })
         }
 
         if (error.status === 504) {
             return res.status(504).json({
                 message: "Resume PDF generation took too long. Please try again."
+            })
+        }
+
+        if (error.status === 502) {
+            return res.status(502).json({
+                message: "The AI service returned an invalid response. Please try again."
             })
         }
 

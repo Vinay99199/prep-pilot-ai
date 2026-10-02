@@ -46,7 +46,7 @@ The application currently includes features such as:
 - Token Blacklisting
 
 ### AI
-- Gemini API
+- OpenAI API
 
 ### Other Tools
 - Multer

@@ -1,23 +1,16 @@
 
-if (!process.env.GOOGLE_GENAI_API_KEY) {
-    require("dotenv").config({
-        path: require("path").resolve(__dirname, "../../.env")
-    })
-}
-
-const { GoogleGenAI } = require("@google/genai")
+const OpenAI = require("openai")
 const { z } = require("zod")
 const puppeteer = require("puppeteer")
 
-const AI_MODELS = [
-    "gemini-3.8-flash",
-    "gemini-3.6-flash"
-]
-
-const AI_TIMEOUT_MS = 45000
+const DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
+const AI_TIMEOUT_MS = 40000
 const PDF_TIMEOUT_MS = 60000
+const MAX_AI_ATTEMPTS = 2
+const RETRY_DELAY_MS = 1000
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+let openai
 
 const withTimeout = async (operation, timeoutMs, label) => {
     let timeoutId
@@ -39,10 +32,125 @@ const withTimeout = async (operation, timeoutMs, label) => {
     }
 }
 
-console.log("AI SERVICE LOADED - MODEL: gemini-3.8-flash")
-const ai = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY
-})
+function getOpenAIClient() {
+    const apiKey = process.env.OPENAI_API_KEY?.trim()
+
+    if (!apiKey) {
+        throw createAiError("OPENAI_API_KEY is not configured.", 503, null, "OPENAI_CONFIG")
+    }
+
+    if (!openai) {
+        openai = new OpenAI({
+            apiKey,
+            timeout: AI_TIMEOUT_MS,
+            maxRetries: 0
+        })
+    }
+
+    return openai
+}
+
+function createAiError(message, status, cause, code) {
+    const error = new Error(message)
+    error.status = status
+    error.cause = cause
+    error.code = code
+    error.isAiServiceError = true
+    return error
+}
+
+function isTimeoutError(error) {
+    return error?.status === 408 ||
+        /timeout|timed out/i.test(error?.name || "") ||
+        [ "ETIMEDOUT", "ECONNABORTED" ].includes(error?.code)
+}
+
+function normalizeOpenAIError(error) {
+    if (error?.isAiServiceError) {
+        return error
+    }
+
+    const status = Number(error?.status || error?.statusCode)
+
+    if (status === 401 || status === 403) {
+        return createAiError("OpenAI authentication failed. Check OPENAI_API_KEY.", 503, error, "OPENAI_AUTH")
+    }
+
+    if (status === 429) {
+        return createAiError("OpenAI rate limit reached. Please try again shortly.", 429, error, "OPENAI_RATE_LIMIT")
+    }
+
+    if (isTimeoutError(error)) {
+        return createAiError("OpenAI request timed out.", 504, error, "OPENAI_TIMEOUT")
+    }
+
+    if (!status || status >= 500) {
+        return createAiError("OpenAI service is temporarily unavailable.", 503, error, "OPENAI_UNAVAILABLE")
+    }
+
+    return createAiError("OpenAI returned an unexpected response.", 502, error, "OPENAI_RESPONSE_ERROR")
+}
+
+async function createStructuredResponse({ name, schema, instructions, prompt, maxOutputTokens }) {
+    const client = getOpenAIClient()
+    let lastError
+
+    for (let attempt = 1; attempt <= MAX_AI_ATTEMPTS; attempt++) {
+        try {
+            console.log(`OpenAI ${name} request: ${process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL} - attempt ${attempt}/${MAX_AI_ATTEMPTS}`)
+
+            const response = await client.responses.create({
+                model: process.env.OPENAI_MODEL?.trim() || DEFAULT_OPENAI_MODEL,
+                input: [
+                    { role: "system", content: instructions },
+                    { role: "user", content: prompt }
+                ],
+                text: {
+                    format: {
+                        type: "json_schema",
+                        name,
+                        schema,
+                        strict: true
+                    }
+                },
+                max_output_tokens: maxOutputTokens
+            })
+
+            if (response.status !== "completed" || !response.output_text) {
+                throw createAiError("OpenAI returned incomplete or empty structured output.", 502, null, "OPENAI_INVALID_OUTPUT")
+            }
+
+            return response.output_text
+
+        } catch (error) {
+            lastError = normalizeOpenAIError(error)
+            const apiStatus = Number(error?.status || error?.statusCode)
+            const retryable = !error?.isAiServiceError &&
+                apiStatus !== 401 &&
+                apiStatus !== 403 &&
+                (apiStatus === 429 || isTimeoutError(error) || apiStatus >= 500 || !apiStatus)
+
+            console.error(`OpenAI ${name} error on attempt ${attempt}/${MAX_AI_ATTEMPTS}:`, lastError.status, lastError.message)
+
+            if (!retryable || attempt === MAX_AI_ATTEMPTS) {
+                throw lastError
+            }
+
+            console.log(`Retrying OpenAI ${name} in ${RETRY_DELAY_MS}ms...`)
+            await sleep(RETRY_DELAY_MS)
+        }
+    }
+
+    throw lastError
+}
+
+function parseStructuredOutput(text, schema, outputName) {
+    try {
+        return schema.parse(JSON.parse(text))
+    } catch (error) {
+        throw createAiError(`OpenAI returned invalid ${outputName} data.`, 502, error, "OPENAI_INVALID_OUTPUT")
+    }
+}
 
 const interviewReportSchema = z.object({
 
@@ -86,7 +194,7 @@ const interviewReportSchema = z.object({
 const interviewReportResponseSchema = {
     type: "object",
     properties: {
-        matchScore: { type: "number" },
+        matchScore: { type: "number", minimum: 0, maximum: 100 },
         technicalQuestions: {
             type: "array",
             items: {
@@ -96,7 +204,8 @@ const interviewReportResponseSchema = {
                     intention: { type: "string" },
                     answer: { type: "string" }
                 },
-                required: ["question", "intention", "answer"]
+                required: ["question", "intention", "answer"],
+                additionalProperties: false
             }
         },
         behavioralQuestions: {
@@ -108,7 +217,8 @@ const interviewReportResponseSchema = {
                     intention: { type: "string" },
                     answer: { type: "string" }
                 },
-                required: ["question", "intention", "answer"]
+                required: ["question", "intention", "answer"],
+                additionalProperties: false
             }
         },
         skillGaps: {
@@ -119,7 +229,8 @@ const interviewReportResponseSchema = {
                     skill: { type: "string" },
                     severity: { type: "string", enum: ["low", "medium", "high"] }
                 },
-                required: ["skill", "severity"]
+                required: ["skill", "severity"],
+                additionalProperties: false
             }
         },
         preparationPlan: {
@@ -131,12 +242,14 @@ const interviewReportResponseSchema = {
                     focus: { type: "string" },
                     tasks: { type: "array", items: { type: "string" } }
                 },
-                required: ["day", "focus", "tasks"]
+                required: ["day", "focus", "tasks"],
+                additionalProperties: false
             }
         },
         title: { type: "string" }
     },
-    required: ["matchScore", "technicalQuestions", "behavioralQuestions", "skillGaps", "preparationPlan", "title"]
+    required: ["matchScore", "technicalQuestions", "behavioralQuestions", "skillGaps", "preparationPlan", "title"],
+    additionalProperties: false
 }
 
 async function generateInterviewReport({
@@ -247,75 +360,25 @@ Every preparationPlan element must contain day, focus, and tasks.
 Return only the JSON object matching the provided response schema.
 `
 
-    let lastError
-    let allModelsRateLimited = true
+    const responseText = await createStructuredResponse({
+        name: "interview_report",
+        schema: interviewReportResponseSchema,
+        instructions: "You are an expert technical interviewer and career coach. Return a complete interview preparation report that follows the supplied JSON schema exactly.",
+        prompt,
+        maxOutputTokens: 7000
+    })
+    const validatedReport = parseStructuredOutput(responseText, interviewReportSchema, "interview report")
 
-    for (const model of AI_MODELS) {
+    console.log("REPORT FIELDS:", {
+        matchScore: validatedReport.matchScore,
+        technicalQuestions: validatedReport.technicalQuestions.length,
+        behavioralQuestions: validatedReport.behavioralQuestions.length,
+        skillGaps: validatedReport.skillGaps.length,
+        preparationPlan: validatedReport.preparationPlan.length,
+        title: validatedReport.title
+    })
 
-        try {
-
-            console.log(`Gemini interview request: ${model}`)
-
-            const response = await withTimeout(
-                () => ai.models.generateContent({
-                    model,
-                    contents: prompt,
-                    config: {
-                        responseMimeType: "application/json",
-                        responseSchema: interviewReportResponseSchema
-                    }
-                }),
-                AI_TIMEOUT_MS,
-                `Gemini interview request (${model})`
-            )
-
-            console.log(`Gemini interview response received using ${model}`)
-
-            const report = JSON.parse(response.text)
-            const validatedReport = interviewReportSchema.parse(report)
-
-            console.log("REPORT FIELDS:", {
-                matchScore: validatedReport.matchScore,
-                technicalQuestions: validatedReport.technicalQuestions.length,
-                behavioralQuestions: validatedReport.behavioralQuestions.length,
-                skillGaps: validatedReport.skillGaps.length,
-                preparationPlan: validatedReport.preparationPlan.length,
-                title: validatedReport.title
-            })
-
-            return validatedReport
-
-        } catch (error) {
-
-            lastError = error
-
-            const status = error?.status || error?.code
-            if (status !== 429) {
-                allModelsRateLimited = false
-            }
-
-            console.error(`Gemini interview error using ${model}:`, status, error?.message)
-
-            const retryable =
-                status === 503 ||
-                status === 504 ||
-                status === 429 ||
-                error?.message?.includes("UNAVAILABLE") ||
-                error?.message?.includes("timed out")
-
-            if (!retryable) {
-                throw error
-            }
-
-            console.log(`Model ${model} unavailable. Trying fallback model...`)
-        }
-    }
-
-    const finalError = new Error("AI service is temporarily unavailable. Please try again later.")
-    finalError.status = allModelsRateLimited ? 429 : 503
-    finalError.cause = lastError
-
-    throw finalError
+    return validatedReport
 }
 
 async function generatePdfFromHtml(html) {
@@ -395,8 +458,17 @@ async function generateResumePdf({
     }
 
     const resumePdfSchema = z.object({
-        html: z.string()
+        html: z.string().min(1)
     })
+
+    const resumePdfResponseSchema = {
+        type: "object",
+        properties: {
+            html: { type: "string" }
+        },
+        required: ["html"],
+        additionalProperties: false
+    }
 
     const prompt = `
 Generate a professional ATS-friendly resume for the candidate.
@@ -425,92 +497,48 @@ Requirements:
 Return only valid JSON matching the provided schema.
 `
 
-    let lastError
+    const responseText = await createStructuredResponse({
+        name: "resume_html",
+        schema: resumePdfResponseSchema,
+        instructions: "You are an expert resume writer. Generate a complete, professional ATS-friendly HTML resume, and return it in the supplied JSON schema.",
+        prompt,
+        maxOutputTokens: 7000
+    })
+    const validatedResume = parseStructuredOutput(responseText, resumePdfSchema, "resume HTML")
+    const html = validateResumeHtml(validatedResume.html)
 
-    for (const model of AI_MODELS) {
+    try {
+        const pdfBuffer = await withTimeout(
+            () => generatePdfFromHtml(html),
+            PDF_TIMEOUT_MS,
+            "Resume PDF generation"
+        )
 
-        for (let attempt = 1; attempt <= 2; attempt++) {
+        console.log("Resume PDF generated successfully using OpenAI and Puppeteer")
+        return pdfBuffer
 
-            try {
-                console.log(`Resume Gemini request: ${model} - attempt ${attempt}/2`)
+    } catch (pdfError) {
+        console.error("Resume PDF generation error:", pdfError)
+        throw pdfError
+    }
+}
 
-                const response = await withTimeout(
-                    () => ai.models.generateContent({
-                        model,
-                        contents: prompt,
-                        config: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "object",
-                                properties: {
-                                    html: { type: "string" }
-                                },
-                                required: ["html"]
-                            }
-                        }
-                    }),
-                    AI_TIMEOUT_MS,
-                    `Resume Gemini request (${model})`
-                )
+function validateResumeHtml(html) {
+    const document = html.trim()
 
-                console.log(`Resume Gemini response received using ${model}`)
+    const hasDocumentStructure = /<html\b/i.test(document) &&
+        /<body\b[\s\S]*<\/body\s*>/i.test(document)
+    const containsUnsafeMarkup = /<\s*(script|iframe|frame|object|embed|form|input|button|link|meta|base)\b/i.test(document) ||
+        /\son[a-z]+\s*=/i.test(document) ||
+        /javascript\s*:/i.test(document) ||
+        /\bsrc\s*=\s*["']?\s*(?!data:image\/)[^"'\s>]+/i.test(document) ||
+        /@import\b|url\(\s*["']?\s*(?:https?:|\/\/|file:)/i.test(document)
 
-                const jsonContent = JSON.parse(response.text)
-                const validatedResume = resumePdfSchema.parse(jsonContent)
-
-                try {
-                    const pdfBuffer = await withTimeout(
-                        () => generatePdfFromHtml(validatedResume.html),
-                        PDF_TIMEOUT_MS,
-                        `Resume PDF generation (${model})`
-                    )
-
-                    console.log(`Resume PDF generated successfully using ${model}`)
-                    return pdfBuffer
-
-                } catch (pdfError) {
-                    console.error("Resume PDF generation error:", pdfError)
-                    throw pdfError
-                }
-
-            } catch (error) {
-
-                lastError = error
-
-                const status = error?.status || error?.code
-
-                console.error(`Resume Gemini error: model=${model}, attempt=${attempt}/2:`, status, error?.message)
-
-                if (status === 429) {
-                    console.log(`${model} quota exceeded. Trying next model...`)
-                    break
-                }
-
-                const retryable =
-                    status === 503 ||
-                    status === 504 ||
-                    error?.message?.includes("UNAVAILABLE") ||
-                    error?.message?.includes("timed out")
-
-                if (!retryable) {
-                    throw error
-                }
-
-                if (attempt < 2) {
-                    console.log(`Retrying ${model} in 2000ms...`)
-                    await sleep(2000)
-                }
-            }
-        }
-
-        console.log(`Model ${model} unavailable. Trying fallback model...`)
+    if (!hasDocumentStructure || containsUnsafeMarkup || document.length > 500000) {
+        throw createAiError("OpenAI returned invalid or unsafe resume HTML.", 502, null, "OPENAI_INVALID_HTML")
     }
 
-    const finalError = new Error("AI service is temporarily unavailable. Please try again later.")
-    finalError.status = 503
-    finalError.cause = lastError
-
-    throw finalError
+    return document
 }
 
 module.exports = {
