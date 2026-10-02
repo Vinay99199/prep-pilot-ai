@@ -10,8 +10,8 @@ const { z } = require("zod")
 const puppeteer = require("puppeteer")
 
 const AI_MODELS = [
-    "gemini-3.6-flash",
-    "gemini-3.5-flash"
+    "gemini-3.8-flash",
+    "gemini-3.6-flash"
 ]
 
 const AI_TIMEOUT_MS = 45000
@@ -39,7 +39,7 @@ const withTimeout = async (operation, timeoutMs, label) => {
     }
 }
 
-console.log("AI SERVICE LOADED - MODEL: gemini-3.6-flash")
+console.log("AI SERVICE LOADED - MODEL: gemini-3.8-flash")
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
