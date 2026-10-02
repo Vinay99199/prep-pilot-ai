@@ -2,6 +2,8 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const { existsSync } = require("node:fs")
+const path = require("node:path")
+process.env.PUPPETEER_CACHE_DIR = path.resolve(__dirname, "../..", ".puppeteer-cache")
 if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     console.warn("Ignoring stale PUPPETEER_EXECUTABLE_PATH; using Puppeteer's installed browser.")
     delete process.env.PUPPETEER_EXECUTABLE_PATH
