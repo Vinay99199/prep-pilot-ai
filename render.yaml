@@ -24,4 +24,4 @@ services:
       - key: GEMINI_MODEL
         value: gemini-3.5-flash-lite
       - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
+        value: /opt/render/project/src/Backend/.puppeteer-cache
