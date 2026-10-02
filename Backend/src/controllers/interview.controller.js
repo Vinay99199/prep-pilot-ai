@@ -184,35 +184,92 @@ async function deleteInterviewReportController(req, res) {
  * @description Controller to generate resume PDF based on user self description, resume and job description.
  */
 async function generateResumePdfController(req, res) {
-    const { interviewReportId } = req.params
 
-    if (!mongoose.isValidObjectId(interviewReportId)) {
-        return res.status(400).json({
-            message: "Invalid interview report ID."
+    try {
+
+        const { interviewReportId } = req.params
+
+        if (!mongoose.isValidObjectId(interviewReportId)) {
+            return res.status(400).json({
+                message: "Invalid interview report ID."
+            })
+        }
+
+        const interviewReport = await interviewReportModel.findOne({
+            _id: interviewReportId,
+            user: req.user.id
+        })
+
+        if (!interviewReport) {
+            return res.status(404).json({
+                message: "Interview report not found."
+            })
+        }
+
+        // If PDF already exists, download it directly.
+        // Gemini will NOT be called.
+        if (interviewReport.resumePdf?.length) {
+
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
+            })
+
+            return res.send(interviewReport.resumePdf)
+        }
+
+        const {
+            resume,
+            jobDescription,
+            selfDescription
+        } = interviewReport
+
+        // Generate PDF only when it does not already exist.
+        const pdfBuffer = await generateResumePdf({
+            resume,
+            jobDescription,
+            selfDescription
+        })
+
+        // Save generated PDF in MongoDB.
+        interviewReport.resumePdf = pdfBuffer
+
+        await interviewReport.save()
+
+        res.set({
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
+        })
+
+        return res.send(pdfBuffer)
+
+    } catch (error) {
+
+        console.error("Generate Resume PDF Error:", error)
+
+        if (error.status === 429) {
+            return res.status(429).json({
+                message: "Gemini API quota exceeded. Please try again later."
+            })
+        }
+
+        if (error.status === 503) {
+            return res.status(503).json({
+                message: "Gemini AI service is temporarily unavailable. Please try again."
+            })
+        }
+
+        if (error.status === 504) {
+            return res.status(504).json({
+                message: "Resume PDF generation took too long. Please try again."
+            })
+        }
+
+        return res.status(500).json({
+            message: "Failed to generate resume PDF.",
+            error: error.message
         })
     }
-
-    const interviewReport = await interviewReportModel.findOne({
-        _id: interviewReportId,
-        user: req.user.id
-    })
-
-    if (!interviewReport) {
-        return res.status(404).json({
-            message: "Interview report not found."
-        })
-    }
-
-    const { resume, jobDescription, selfDescription } = interviewReport
-
-    const pdfBuffer = await generateResumePdf({ resume, jobDescription, selfDescription })
-
-    res.set({
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
-    })
-
-    res.send(pdfBuffer)
 }
 
 module.exports = { generateInterViewReportController, getInterviewReportByIdController, getAllInterviewReportsController, deleteInterviewReportController, generateResumePdfController }
