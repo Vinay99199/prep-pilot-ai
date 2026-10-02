@@ -22,6 +22,6 @@ services:
       - key: GOOGLE_GENAI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-3.6-flash
+        value: gemini-3.5-flash-lite
       - key: PUPPETEER_CACHE_DIR
         value: /opt/render/.cache/puppeteer

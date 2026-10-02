@@ -7,7 +7,7 @@ if (process.env.PUPPETEER_EXECUTABLE_PATH) {
 }
 const puppeteer = require("puppeteer")
 
-const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
 const AI_TIMEOUT_MS = 45000
 const PDF_TIMEOUT_MS = 60000
 const MAX_AI_ATTEMPTS = 2
