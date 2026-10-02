@@ -1,6 +1,7 @@
 
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
+const { existsSync } = require("node:fs")
 if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     console.warn("Ignoring stale PUPPETEER_EXECUTABLE_PATH; using Puppeteer's installed browser.")
     delete process.env.PUPPETEER_EXECUTABLE_PATH
@@ -381,10 +382,17 @@ async function generatePdfFromHtml(html) {
     let page
 
     try {
-        console.log("Launching Puppeteer's installed Chrome browser.")
+        const executablePath = await puppeteer.executablePath()
+
+        if (!existsSync(executablePath)) {
+            throw new Error(`Puppeteer Chrome executable was not found at ${executablePath}.`)
+        }
+
+        console.log("Chrome executable:", executablePath)
 
         browser = await puppeteer.launch({
             headless: true,
+            executablePath,
             timeout: 60000,
             args: [
                 "--no-sandbox",
