@@ -412,7 +412,7 @@ async function generatePdfFromHtml(html) {
             timeout: 30000
         })
 
-        const pdfBuffer = await page.pdf({
+        const pdf = await page.pdf({
             format: "A4",
             printBackground: true,
             preferCSSPageSize: true,
@@ -424,7 +424,7 @@ async function generatePdfFromHtml(html) {
             }
         })
 
-        return pdfBuffer
+        return Buffer.from(pdf)
 
     } finally {
         if (page) {
