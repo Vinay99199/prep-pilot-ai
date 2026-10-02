@@ -448,53 +448,7 @@ async function generateResumePdf({
         throw Object.assign(new Error("Resume or self-description is required."), { status: 400 })
     }
 
-    const resumePdfSchema = z.object({
-        html: z.string().min(1)
-    })
-
-    const resumePdfResponseSchema = {
-        type: "object",
-        properties: {
-            html: { type: "string" }
-        },
-        required: ["html"],
-        additionalProperties: false
-    }
-
-    const prompt = `
-Generate a professional ATS-friendly resume for the candidate.
-
-RESUME:
-${resume}
-
-SELF DESCRIPTION:
-${selfDescription}
-
-JOB DESCRIPTION:
-${jobDescription}
-
-Requirements:
-
-- Tailor the resume specifically to the job description.
-- Highlight relevant technical skills and projects.
-- Keep the resume professional and human-written.
-- Keep it approximately 1-2 pages.
-- Make it ATS friendly.
-- Use clean HTML.
-- Do not include unnecessary content.
-- The response must contain ONLY one field named "html".
-- The value of "html" must contain the complete HTML resume.
-
-Return only valid JSON matching the provided schema.
-`
-
-    const responseText = await createGeminiStructuredResponse({
-        name: "resume_html",
-        schema: resumePdfResponseSchema,
-        prompt,
-    })
-    const validatedResume = parseGeminiOutput(responseText, resumePdfSchema, "resume HTML")
-    const html = validateResumeHtml(validatedResume.html)
+    const html = validateResumeHtml(buildResumeHtml({ resume, selfDescription, jobDescription }))
 
     try {
         const pdfBuffer = await withTimeout(
@@ -503,13 +457,73 @@ Return only valid JSON matching the provided schema.
             "Resume PDF generation"
         )
 
-        console.log("Resume PDF generated successfully using Gemini and Puppeteer")
+        console.log("Resume PDF generated from local HTML using Puppeteer")
         return pdfBuffer
 
     } catch (pdfError) {
         console.error("Resume PDF generation error:", pdfError)
         throw pdfError
     }
+}
+
+function buildResumeHtml({ resume, selfDescription, jobDescription }) {
+    const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character])
+
+    const formatText = (value) => String(value || "")
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => `<p>${escapeHtml(line)}</p>`)
+        .join("\n")
+
+    const candidateText = `${resume || ""}\n${selfDescription || ""}`
+    const stopWords = new Set([
+        "about", "across", "after", "also", "and", "are", "based", "been", "both", "can", "candidate",
+        "company", "experience", "from", "good", "have", "into", "into", "looking", "must", "our", "role",
+        "should", "skills", "such", "team", "that", "their", "this", "through", "using", "very", "will", "with", "work", "your"
+    ])
+    const relevantSkills = [...new Set((jobDescription.match(/[A-Za-z][A-Za-z0-9+#.-]{1,}/g) || [])
+        .filter(skill => !stopWords.has(skill.toLowerCase()) && candidateText.toLowerCase().includes(skill.toLowerCase())))]
+        .slice(0, 12)
+    const skillsSection = relevantSkills.length
+        ? `<section><h2>Role-relevant skills</h2><ul class="skills">${relevantSkills.map(skill => `<li>${escapeHtml(skill)}</li>`).join("")}</ul></section>`
+        : ""
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+<title>Professional Resume</title>
+<style>
+@page { size: A4; margin: 16mm; }
+* { box-sizing: border-box; }
+body { color: #17212b; font: 10.5pt/1.55 Arial, sans-serif; margin: 0; }
+main { max-width: 780px; margin: 0 auto; }
+header { border-bottom: 2px solid #247c78; margin-bottom: 24px; padding-bottom: 15px; }
+h1 { color: #173c45; font-size: 25pt; line-height: 1.15; margin: 0 0 6px; }
+.eyebrow { color: #247c78; font-size: 9pt; font-weight: 700; margin: 0 0 8px; text-transform: uppercase; }
+.target { color: #51616c; margin: 0; }
+section { margin: 0 0 22px; page-break-inside: avoid; }
+h2 { border-bottom: 1px solid #c8d4d5; color: #247c78; font-size: 12pt; margin: 0 0 9px; padding-bottom: 4px; }
+p { margin: 0 0 7px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.skills { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.skills li { border: 1px solid #b9cecb; border-radius: 3px; padding: 3px 8px; }
+</style>
+</head>
+<body>
+<main>
+<header><p class="eyebrow">Professional Resume</p><h1>Candidate Profile</h1><p class="target">Prepared for the supplied job description</p></header>
+${selfDescription?.trim() ? `<section><h2>Professional Profile</h2>${formatText(selfDescription)}</section>` : ""}
+${skillsSection}
+${resume?.trim() ? `<section><h2>Resume Details</h2>${formatText(resume)}</section>` : ""}
+</main>
+</body>
+</html>`
 }
 
 function validateResumeHtml(html) {
@@ -524,7 +538,7 @@ function validateResumeHtml(html) {
         /@import\b|url\(\s*["']?\s*(?:https?:|\/\/|file:)/i.test(document)
 
     if (!hasDocumentStructure || containsUnsafeMarkup || document.length > 500000) {
-        throw createAiError("Gemini returned invalid or unsafe resume HTML.", 502, null, "GEMINI_INVALID_HTML")
+        throw createAiError("Locally generated resume HTML is invalid.", 500, null, "INVALID_RESUME_HTML")
     }
 
     return document
