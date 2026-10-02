@@ -2,6 +2,7 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const puppeteer = require("puppeteer")
+const { existsSync } = require("node:fs")
 
 const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 const AI_TIMEOUT_MS = 45000
@@ -377,7 +378,15 @@ async function generatePdfFromHtml(html) {
     let page
 
     try {
-        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+        const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH?.trim()
+        const executablePath = configuredExecutablePath && existsSync(configuredExecutablePath)
+            ? configuredExecutablePath
+            : undefined
+
+        if (configuredExecutablePath && !executablePath) {
+            console.warn("Configured Puppeteer executable was not found; using Puppeteer's installed browser.")
+            delete process.env.PUPPETEER_EXECUTABLE_PATH
+        }
 
         console.log("Chrome executable:", executablePath || "default Puppeteer browser")
 

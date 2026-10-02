@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "npx nodemon server.js",
     "start": "node server.js",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "postinstall": "npx puppeteer browsers install chrome-headless-shell"
   },
   "keywords": [],
   "author": "",

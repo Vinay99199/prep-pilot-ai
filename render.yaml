@@ -23,5 +23,3 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-3.6-flash
-      - key: PUPPETEER_EXECUTABLE_PATH
-        sync: false
