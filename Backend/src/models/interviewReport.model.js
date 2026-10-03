@@ -92,8 +92,12 @@ const interviewReportSchema = new mongoose.Schema({
         type: String,
         required: [ true, "Job title is required" ]
     },
+    customizedResume: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     resumePdf: {
-    type: Buffer
+        type: Buffer
     },
 }, {
     timestamps: true

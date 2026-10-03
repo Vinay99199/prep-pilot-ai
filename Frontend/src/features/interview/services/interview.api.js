@@ -21,7 +21,7 @@ export const generateInterviewReport = async ({ jobDescription, selfDescription,
         headers: {
             "Content-Type": "multipart/form-data"
         },
-        timeout: 100000
+        timeout: 200000
     })
 
     return response.data

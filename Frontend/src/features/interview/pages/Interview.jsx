@@ -64,6 +64,165 @@ const RoadMapDay = ({ day }) => (
     </article>
 )
 
+const resumeText = value => typeof value === 'string' ? value.trim() : ''
+const resumeList = values => Array.isArray(values) ? values.filter(value => resumeText(value)) : []
+
+const ResumeSection = ({ title, children }) => {
+    const content = Array.isArray(children) ? children.filter(Boolean) : children
+    const hasContent = Array.isArray(content) ? content.length > 0 : Boolean(content)
+
+    return hasContent ? (
+        <section className='customized-resume__section'>
+            <h3>{title}</h3>
+            {content}
+        </section>
+    ) : null
+}
+
+const hasResumeEntryContent = (entry, fields) => entry && typeof entry === 'object' &&
+    fields.some(field => Array.isArray(entry[field]) ? resumeList(entry[field]).length > 0 : resumeText(entry[field]))
+
+const ResumeEntry = ({ title, subtitle, dates, details, bullets }) => {
+    const cleanTitle = resumeText(title)
+    const cleanSubtitle = resumeText(subtitle)
+    const cleanDates = resumeText(dates)
+    const cleanDetails = resumeText(details)
+    const cleanBullets = resumeList(bullets)
+
+    if (!cleanTitle && !cleanSubtitle && !cleanDates && !cleanDetails && !cleanBullets.length) {
+        return null
+    }
+
+    return (
+        <article className='customized-resume__entry'>
+            {(cleanTitle || cleanDates) && (
+                <div className='customized-resume__entry-heading'>
+                    {cleanTitle && <h4>{cleanTitle}</h4>}
+                    {cleanDates && <span>{cleanDates}</span>}
+                </div>
+            )}
+            {cleanSubtitle && <p className='customized-resume__meta'>{cleanSubtitle}</p>}
+            {cleanDetails && <p>{cleanDetails}</p>}
+            {cleanBullets.length > 0 && (
+                <ul>
+                    {cleanBullets.map((bullet, index) => <li key={index}>{resumeText(bullet)}</li>)}
+                </ul>
+            )}
+        </article>
+    )
+}
+
+const CustomizedResume = ({ resume }) => {
+    const skills = resumeList(resume?.skills)
+    const skillGroups = Array.isArray(resume?.skillGroups)
+        ? resume.skillGroups.filter(group => resumeText(group?.category) && resumeList(group?.skills).length > 0)
+        : []
+    const experience = Array.isArray(resume?.experience)
+        ? resume.experience.filter(item => hasResumeEntryContent(item, ['title', 'company', 'location', 'dates', 'bullets']))
+        : []
+    const projects = Array.isArray(resume?.projects)
+        ? resume.projects.filter(item => hasResumeEntryContent(item, ['name', 'technologies', 'dates', 'bullets']))
+        : []
+    const education = Array.isArray(resume?.education)
+        ? resume.education.filter(item => hasResumeEntryContent(item, ['degree', 'institution', 'location', 'dates', 'details']))
+        : []
+    const certifications = resumeList(resume?.certifications)
+    const achievements = resumeList(resume?.achievements)
+    const summary = resumeText(resume?.summary)
+    const name = resumeText(resume?.name)
+    const contacts = [resume?.email, resume?.phone, resume?.location, resume?.linkedin, resume?.portfolio]
+        .map(resumeText)
+        .filter(Boolean)
+    const hasContent = Boolean(
+        name || resumeText(resume?.professionalTitle) || contacts.length || summary || skills.length ||
+        skillGroups.length || certifications.length || achievements.length ||
+        experience.length || projects.length || education.length
+    )
+
+    return (
+        <section className='customized-resume' aria-labelledby='customized-resume-title'>
+            <div className='customized-resume__header'>
+                <div>
+                    <p className='report-section__eyebrow'>YOUR RESUME</p>
+                    <h2 id='customized-resume-title'>Customized resume</h2>
+                </div>
+            </div>
+            {hasContent ? (
+                <div className='customized-resume__content'>
+                    {(name || contacts.length > 0) && (
+                        <header className='customized-resume__identity'>
+                            {name && <h3>{name}</h3>}
+                            {resumeText(resume?.professionalTitle) && <p className='customized-resume__title'>{resumeText(resume.professionalTitle)}</p>}
+                            {contacts.length > 0 && <p>{contacts.join(' · ')}</p>}
+                        </header>
+                    )}
+                    <ResumeSection title='Summary'>
+                        {summary && <p>{summary}</p>}
+                    </ResumeSection>
+                    <ResumeSection title='Skills'>
+                        {skillGroups.length > 0 ? (
+                            <div className='customized-resume__skill-groups'>
+                                {skillGroups.map((group, index) => (
+                                    <p key={`${group.category}-${index}`}>
+                                        <strong>{resumeText(group.category)}:</strong> {resumeList(group.skills).map(resumeText).join(', ')}
+                                    </p>
+                                ))}
+                            </div>
+                        ) : skills.length > 0 ? (
+                            <ul className='customized-resume__skills'>
+                                {skills.map((skill, index) => <li key={`${skill}-${index}`}>{resumeText(skill)}</li>)}
+                            </ul>
+                        ) : null}
+                    </ResumeSection>
+                    <ResumeSection title='Experience'>
+                        {experience.map((item, index) => (
+                            <ResumeEntry
+                                key={`experience-${index}`}
+                                title={item.title}
+                                subtitle={[item.company, item.location].map(resumeText).filter(Boolean).join(' · ')}
+                                dates={item.dates}
+                                bullets={item.bullets}
+                            />
+                        ))}
+                    </ResumeSection>
+                    <ResumeSection title='Projects'>
+                        {projects.map((item, index) => (
+                            <ResumeEntry
+                                key={`project-${index}`}
+                                title={item.name}
+                                subtitle={item.technologies}
+                                dates={item.dates}
+                                bullets={item.bullets}
+                            />
+                        ))}
+                    </ResumeSection>
+                    <ResumeSection title='Education'>
+                        {education.map((item, index) => (
+                            <ResumeEntry
+                                key={`education-${index}`}
+                                title={item.degree}
+                                subtitle={[item.institution, item.location].map(resumeText).filter(Boolean).join(' · ')}
+                                dates={item.dates}
+                                details={item.details}
+                            />
+                        ))}
+                    </ResumeSection>
+                    <ResumeSection title='Certifications'>
+                        {certifications.length > 0 && <ul>{certifications.map((item, index) => <li key={index}>{resumeText(item)}</li>)}</ul>}
+                    </ResumeSection>
+                    <ResumeSection title='Achievements'>
+                        {achievements.length > 0 && <ul>{achievements.map((item, index) => <li key={index}>{resumeText(item)}</li>)}</ul>}
+                    </ResumeSection>
+                </div>
+            ) : (
+                <p className='customized-resume__empty'>
+                    {resume ? 'No resume details were generated for this report.' : 'This older report does not have a customized resume yet. Download the PDF to generate and save one.'}
+                </p>
+            )}
+        </section>
+    )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const Interview = () => {
     const [ activeNav, setActiveNav ] = useState('technical')
@@ -141,6 +300,8 @@ const Interview = () => {
                 </button>
             </header>
 
+            <CustomizedResume resume={report.customizedResume} />
+
             <div className='report-layout'>
                 <section className='report-main' aria-label='Preparation materials'>
                     <nav className='report-tabs' aria-label='Plan sections'>
@@ -199,9 +360,10 @@ const Interview = () => {
 
                     <section className='report-skills'>
                         <div className='report-skills__heading'>
-                            <h2>Skills to review</h2>
+                            <h2>Skill gaps to work on</h2>
                             <span>{skillGaps.length}</span>
                         </div>
+                        <p className='report-skills__description'>Areas to practice for this role.</p>
                         {skillGaps.length > 0 ? (
                             <ul className='report-skills__list'>
                                 {skillGaps.map((gap, index) => (
@@ -212,7 +374,7 @@ const Interview = () => {
                                 ))}
                             </ul>
                         ) : (
-                            <p className='report-empty report-empty--small'>No priority gaps were flagged.</p>
+                            <p className='report-empty report-empty--small'>No extra practice areas identified.</p>
                         )}
                     </section>
                 </aside>

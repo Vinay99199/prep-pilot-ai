@@ -1,9 +1,31 @@
 const { PDFParse } = require("pdf-parse")
 const mongoose = require("mongoose")
-const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
+const { generateInterviewReport, generateCustomizedResume, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
 const userModel = require("../models/user.model")
+
+const resumePdfLocks = new Map()
+
+async function withResumePdfLock(interviewReportId, operation) {
+    const previousRequest = resumePdfLocks.get(interviewReportId)
+    let release
+    const currentRequest = new Promise(resolve => {
+        release = resolve
+    })
+
+    resumePdfLocks.set(interviewReportId, currentRequest)
+    await previousRequest
+
+    try {
+        return await operation()
+    } finally {
+        if (resumePdfLocks.get(interviewReportId) === currentRequest) {
+            resumePdfLocks.delete(interviewReportId)
+        }
+        release()
+    }
+}
 
 
 /**
@@ -65,12 +87,19 @@ async function generateInterViewReportController(req, res) {
             jobDescription
         })
 
+        const customizedResume = await generateCustomizedResume({
+            resume: resumeText,
+            selfDescription,
+            jobDescription
+        })
+
         const interviewReport = await interviewReportModel.create({
             user: req.user.id,
             resume: resumeText,
             selfDescription,
             jobDescription,
             ...interViewReportByAi,
+            customizedResume,
             title: interViewReportByAi.title || "Interview Report"
         })
 
@@ -201,53 +230,54 @@ async function generateResumePdfController(req, res) {
             })
         }
 
-        const interviewReport = await interviewReportModel.findOne({
-            _id: interviewReportId,
-            user: req.user.id
-        })
-
-        if (!interviewReport) {
-            return res.status(404).json({
-                message: "Interview report not found."
+        return await withResumePdfLock(interviewReportId, async () => {
+            const interviewReport = await interviewReportModel.findOne({
+                _id: interviewReportId,
+                user: req.user.id
             })
-        }
 
-        // If PDF already exists, download it directly.
-        // Gemini will not be called.
-        if (interviewReport.resumePdf?.length) {
+            if (!interviewReport) {
+                return res.status(404).json({
+                    message: "Interview report not found."
+                })
+            }
+
+            // Only use a cached PDF when it belongs to the saved customized resume.
+            if (interviewReport.customizedResume && interviewReport.resumePdf?.length) {
+
+                res.set({
+                    "Content-Type": "application/pdf",
+                    "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
+                })
+
+                return res.send(interviewReport.resumePdf)
+            }
+
+            if (!interviewReport.customizedResume) {
+                interviewReport.customizedResume = await generateCustomizedResume({
+                    resume: interviewReport.resume,
+                    jobDescription: interviewReport.jobDescription,
+                    selfDescription: interviewReport.selfDescription
+                })
+                interviewReport.resumePdf = undefined
+                interviewReport.markModified("customizedResume")
+                await interviewReport.save()
+            }
+
+            const pdfBuffer = await generateResumePdf({
+                customizedResume: interviewReport.customizedResume
+            })
+
+            interviewReport.resumePdf = pdfBuffer
+            await interviewReport.save()
 
             res.set({
                 "Content-Type": "application/pdf",
                 "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
             })
 
-            return res.send(interviewReport.resumePdf)
-        }
-
-        const {
-            resume,
-            jobDescription,
-            selfDescription
-        } = interviewReport
-
-        // Generate PDF only when it does not already exist.
-        const pdfBuffer = await generateResumePdf({
-            resume,
-            jobDescription,
-            selfDescription
+            return res.send(pdfBuffer)
         })
-
-        // Save generated PDF in MongoDB.
-        interviewReport.resumePdf = pdfBuffer
-
-        await interviewReport.save()
-
-        res.set({
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
-        })
-
-        return res.send(pdfBuffer)
 
     } catch (error) {
 

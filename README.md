@@ -68,7 +68,7 @@ The basic flow of the application is:
 7. Interview questions are generated based on the available information.
 8. An interview report is created and stored.
 9. Users can view their previous reports.
-10. The application can generate a resume PDF through the backend.
+10. Interview report generation creates and stores a job-specific customized resume alongside the analysis and interview plan. The report page displays that saved resume, and Puppeteer renders PDFs from the same data. Older reports generate and save a resume on the first PDF download.
 
 ## Project Structure
 

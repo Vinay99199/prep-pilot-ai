@@ -114,6 +114,118 @@
         animation: report-spin 0.75s linear infinite;
     }
 
+    .customized-resume {
+        margin-top: 22px;
+        padding: 20px;
+        border: 1px solid var(--report-line);
+        border-radius: 8px;
+        background: var(--report-surface);
+    }
+
+    .customized-resume__header {
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--report-line);
+    }
+
+    .customized-resume__header h2 {
+        margin: 0;
+        color: var(--report-ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 22px;
+        font-weight: 500;
+    }
+
+    .customized-resume__content { display: grid; gap: 17px; padding-top: 17px; }
+
+    .customized-resume__identity {
+        padding-bottom: 13px;
+        border-bottom: 1px solid var(--report-line);
+    }
+
+    .customized-resume__identity h3 {
+        margin: 0;
+        color: var(--report-ink);
+        font-size: 1rem;
+    }
+
+    .customized-resume__identity .customized-resume__title {
+        margin-top: 3px;
+        color: var(--report-accent-dark);
+        font-weight: 650;
+    }
+
+    .customized-resume__identity p,
+    .customized-resume__section p,
+    .customized-resume__entry li {
+        margin: 5px 0 0;
+        color: #c4d0d8;
+        font-size: 0.78rem;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .customized-resume__section h3 {
+        margin: 0 0 8px;
+        color: var(--report-accent-dark);
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .customized-resume__section > p { margin-top: 0; }
+
+    .customized-resume__skills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .customized-resume__skills li {
+        padding: 4px 8px;
+        border: 1px solid #315451;
+        border-radius: 4px;
+        background: var(--report-soft);
+        color: #c4d0d8;
+        font-size: 0.72rem;
+    }
+
+    .customized-resume__skill-groups p { margin: 0 0 5px; }
+    .customized-resume__skill-groups strong { color: var(--report-ink); }
+
+    .customized-resume__entry + .customized-resume__entry { margin-top: 13px; }
+
+    .customized-resume__entry-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .customized-resume__entry-heading h4 {
+        margin: 0;
+        color: var(--report-ink);
+        font-size: 0.82rem;
+    }
+
+    .customized-resume__entry-heading span,
+    .customized-resume__meta { color: var(--report-muted) !important; font-size: 0.71rem !important; }
+
+    .customized-resume__section ul:not(.customized-resume__skills) {
+        margin: 5px 0 0;
+        padding-left: 19px;
+    }
+
+    .customized-resume__empty {
+        margin: 15px 0 0;
+        color: var(--report-muted);
+        font-size: 0.78rem;
+        line-height: 1.55;
+    }
+
     .report-layout {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 270px;
@@ -422,6 +534,13 @@
     }
 
     .report-skills__heading > span { color: var(--report-muted); font-size: 0.7rem; }
+
+    .report-skills__description {
+        margin: 6px 0 0;
+        color: var(--report-muted);
+        font-size: 0.7rem;
+        line-height: 1.45;
+    }
 
     .report-skills__list { display: grid; gap: 8px; margin: 13px 0 0; padding: 0; list-style: none; }
 

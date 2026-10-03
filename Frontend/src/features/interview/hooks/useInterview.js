@@ -126,7 +126,24 @@ export const useInterview = () => {
             link.click()
             link.remove()
             window.URL.revokeObjectURL(url)
-            showToast({ type: "success", message: "Your resume PDF has been downloaded." })
+
+            let resumeRefreshFailed = false
+            if (!report?.customizedResume && report?._id === interviewReportId) {
+                try {
+                    const refreshedResponse = await getInterviewReportById(interviewReportId)
+                    setReport(refreshedResponse?.interviewReport || null)
+                } catch (refreshError) {
+                    console.error("Refresh report after PDF generation failed:", refreshError)
+                    resumeRefreshFailed = true
+                }
+            }
+
+            showToast({
+                type: "success",
+                message: resumeRefreshFailed
+                    ? "Your PDF was downloaded. Refresh the page to view the saved resume."
+                    : "Your resume PDF has been downloaded."
+            })
             return true
         }
         catch (error) {

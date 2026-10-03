@@ -252,6 +252,205 @@ const interviewReportResponseSchema = {
     additionalProperties: false
 }
 
+const customizedResumeSchema = z.object({
+    name: z.string(),
+    professionalTitle: z.string(),
+    email: z.string(),
+    phone: z.string(),
+    location: z.string(),
+    linkedin: z.string(),
+    github: z.string(),
+    portfolio: z.string(),
+    summary: z.string(),
+    skills: z.array(z.string()),
+    skillGroups: z.array(z.object({
+        category: z.string(),
+        skills: z.array(z.string())
+    })),
+    experience: z.array(z.object({
+        title: z.string(),
+        company: z.string(),
+        location: z.string(),
+        dates: z.string(),
+        bullets: z.array(z.string())
+    })),
+    projects: z.array(z.object({
+        name: z.string(),
+        technologies: z.string(),
+        dates: z.string(),
+        bullets: z.array(z.string())
+    })),
+    education: z.array(z.object({
+        degree: z.string(),
+        institution: z.string(),
+        location: z.string(),
+        dates: z.string(),
+        details: z.string()
+    })),
+    certifications: z.array(z.string()),
+    achievements: z.array(z.string())
+})
+
+const customizedResumeResponseSchema = {
+    type: "object",
+    properties: {
+        name: { type: "string" },
+        professionalTitle: { type: "string" },
+        email: { type: "string" },
+        phone: { type: "string" },
+        location: { type: "string" },
+        linkedin: { type: "string" },
+        github: { type: "string" },
+        portfolio: { type: "string" },
+        summary: { type: "string" },
+        skills: { type: "array", items: { type: "string" } },
+        skillGroups: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    category: { type: "string" },
+                    skills: { type: "array", items: { type: "string" } }
+                },
+                required: [ "category", "skills" ],
+                additionalProperties: false
+            }
+        },
+        experience: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    title: { type: "string" },
+                    company: { type: "string" },
+                    location: { type: "string" },
+                    dates: { type: "string" },
+                    bullets: { type: "array", items: { type: "string" } }
+                },
+                required: [ "title", "company", "location", "dates", "bullets" ],
+                additionalProperties: false
+            }
+        },
+        projects: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    name: { type: "string" },
+                    technologies: { type: "string" },
+                    dates: { type: "string" },
+                    bullets: { type: "array", items: { type: "string" } }
+                },
+                required: [ "name", "technologies", "dates", "bullets" ],
+                additionalProperties: false
+            }
+        },
+        education: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    degree: { type: "string" },
+                    institution: { type: "string" },
+                    location: { type: "string" },
+                    dates: { type: "string" },
+                    details: { type: "string" }
+                },
+                required: [ "degree", "institution", "location", "dates", "details" ],
+                additionalProperties: false
+            }
+        },
+        certifications: { type: "array", items: { type: "string" } },
+        achievements: { type: "array", items: { type: "string" } }
+    },
+    required: [
+        "name", "professionalTitle", "email", "phone", "location", "linkedin", "github",
+        "portfolio", "summary", "skills", "skillGroups", "experience", "projects",
+        "education", "certifications", "achievements"
+    ],
+    additionalProperties: false
+}
+
+async function generateCustomizedResume({ resume, selfDescription, jobDescription }) {
+    if (!jobDescription?.trim()) {
+        throw Object.assign(new Error("Job description is required."), { status: 400 })
+    }
+
+    if (!resume?.trim() && !selfDescription?.trim()) {
+        throw Object.assign(new Error("Resume or self-description is required."), { status: 400 })
+    }
+
+    const prompt = `
+You are an expert software engineering resume editor. Create a concise, professional, ATS-friendly resume tailored to the supplied job description using only evidence in the source resume and self-description.
+
+SOURCE RESUME:
+${resume || ""}
+
+CANDIDATE SELF DESCRIPTION:
+${selfDescription || ""}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+FACTUALITY IS MANDATORY:
+- Treat the source resume and self-description as the only sources of candidate facts. The job description is not evidence that the candidate has a requested skill or experience.
+- Never invent or infer companies, job titles, internships, projects, degrees, dates, achievements, certifications, technologies, responsibilities, metrics, contact information, links, or locations.
+- Only include a skill when it is explicitly supported by the source. Never add a JD skill just to improve matching.
+- You may improve grammar, shorten, combine, and reorder facts while preserving their original meaning. Never turn an aspiration or JD requirement into a past accomplishment.
+- Preserve the candidate's actual name and available contact details. Copy available email, phone, location, LinkedIn, GitHub, and portfolio URLs faithfully. Return an empty string for every unavailable field.
+- Do not add a project, experience entry, certification, achievement, or education record that is absent from the source.
+
+CONTENT AND ORDER:
+- Return a concise professional summary of about 2–4 short lines. Use third person or resume-style fragments, never first person. Avoid generic claims and include JD keywords only when supported by the source.
+- Choose professionalTitle from the candidate's demonstrated background and the target role. Use a specific title only when the source supports it; otherwise return an empty string. Never present the target role as prior employment.
+- Group only supported skills into useful categories such as Languages, Frontend, Backend, Databases, and Tools. Put relevant supported skills first. The flat skills field must contain the same supported skills, without additions.
+- Select and order the most JD-relevant existing projects. For each, use 2–4 concise bullets only when the source has enough distinct facts; do not pad sparse source material. Preserve real metrics exactly; do not create new metrics.
+- Include experience/internships only if documented in the source. For a fresher without documented employment, leave experience empty and prioritize projects before education.
+- Keep education compact; include academic scores only when provided.
+- Include certifications and achievements only when present in the source.
+- Omit unavailable details with empty strings or empty arrays. Do not emit nulls, placeholders, markdown, commentary, or empty section entries.
+
+Return the complete resume using exactly the fields in the response schema. Keep descriptions concise and factual; do not include markdown or explanatory text.
+`
+
+    const responseText = await createGeminiStructuredResponse({
+        name: "customized_resume",
+        schema: customizedResumeResponseSchema,
+        prompt
+    })
+
+    const customizedResume = parseGeminiOutput(responseText, customizedResumeSchema, "customized resume")
+    const hasTopLevelContent = [
+        customizedResume.name,
+        customizedResume.professionalTitle,
+        customizedResume.email,
+        customizedResume.phone,
+        customizedResume.location,
+        customizedResume.linkedin,
+        customizedResume.github,
+        customizedResume.portfolio,
+        customizedResume.summary,
+        ...customizedResume.skills,
+        ...customizedResume.certifications,
+        ...customizedResume.achievements
+    ].some(value => value.trim())
+    const hasSectionContent = [
+        ...customizedResume.experience,
+        ...customizedResume.projects,
+        ...customizedResume.education
+    ].some(entry => Object.values(entry).some(value =>
+        typeof value === "string"
+            ? value.trim()
+            : value.some(item => item.trim())
+    ))
+
+    if (!hasTopLevelContent && !hasSectionContent) {
+        throw createAiError("Gemini returned a customized resume with no usable content.", 502, null, "GEMINI_INVALID_RESUME")
+    }
+
+    return customizedResume
+}
+
 async function generateInterviewReport({
     resume,
     selfDescription,
@@ -447,19 +646,13 @@ async function generatePdfFromHtml(html) {
 
 
 async function generateResumePdf({
-    resume,
-    selfDescription,
-    jobDescription
+    customizedResume
 }) {
-    if (!jobDescription?.trim()) {
-        throw Object.assign(new Error("Job description is required."), { status: 400 })
+    if (!customizedResume || typeof customizedResume !== "object") {
+        throw Object.assign(new Error("Customized resume data is required."), { status: 400 })
     }
 
-    if (!resume?.trim() && !selfDescription?.trim()) {
-        throw Object.assign(new Error("Resume or self-description is required."), { status: 400 })
-    }
-
-    const html = validateResumeHtml(buildResumeHtml({ resume, selfDescription, jobDescription }))
+    const html = validateResumeHtml(buildResumeHtml(customizedResume))
 
     try {
         const pdfBuffer = await withTimeout(
@@ -477,8 +670,8 @@ async function generateResumePdf({
     }
 }
 
-function buildResumeHtml({ resume, selfDescription, jobDescription }) {
-    const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, character => ({
+function buildResumeHtml(resume) {
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, character => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -486,52 +679,127 @@ function buildResumeHtml({ resume, selfDescription, jobDescription }) {
         "'": "&#39;"
     })[character])
 
-    const formatText = (value) => String(value || "")
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(Boolean)
-        .map(line => `<p>${escapeHtml(line)}</p>`)
-        .join("\n")
-
-    const candidateText = `${resume || ""}\n${selfDescription || ""}`
-    const stopWords = new Set([
-        "about", "across", "after", "also", "and", "are", "based", "been", "both", "can", "candidate",
-        "company", "experience", "from", "good", "have", "into", "into", "looking", "must", "our", "role",
-        "should", "skills", "such", "team", "that", "their", "this", "through", "using", "very", "will", "with", "work", "your"
-    ])
-    const relevantSkills = [...new Set((jobDescription.match(/[A-Za-z][A-Za-z0-9+#.-]{1,}/g) || [])
-        .filter(skill => !stopWords.has(skill.toLowerCase()) && candidateText.toLowerCase().includes(skill.toLowerCase())))]
-        .slice(0, 12)
-    const skillsSection = relevantSkills.length
-        ? `<section><h2>Role-relevant skills</h2><ul class="skills">${relevantSkills.map(skill => `<li>${escapeHtml(skill)}</li>`).join("")}</ul></section>`
+    const text = (value) => typeof value === "string" ? value.trim() : ""
+    const line = (value, className = "") => {
+        const content = text(value)
+        return content ? `<p${className ? ` class="${className}"` : ""}>${escapeHtml(content)}</p>` : ""
+    }
+    const list = (values, className = "") => {
+        const items = Array.isArray(values) ? values.filter(value => text(value)) : []
+        return items.length
+            ? `<ul${className ? ` class="${className}"` : ""}>${items.map(value => `<li>${escapeHtml(text(value))}</li>`).join("")}</ul>`
+            : ""
+    }
+    const section = (title, contents) => contents
+        ? `<section><h2>${escapeHtml(title)}</h2>${contents}</section>`
         : ""
+    const entries = (values, title, renderEntry) => {
+        const content = (Array.isArray(values) ? values : [])
+            .filter(value => value && typeof value === "object")
+            .map(renderEntry)
+            .filter(Boolean)
+            .join("")
+        return section(title, content)
+    }
+    const renderEntry = ({ heading, subheading, dates, detail, bullets }) => {
+        const headingText = text(heading)
+        const subheadingText = text(subheading)
+        const datesText = text(dates)
+        const detailText = text(detail)
+        const bulletsHtml = list(bullets)
+        if (!headingText && !subheadingText && !datesText && !detailText && !bulletsHtml) {
+            return ""
+        }
+
+        return `<article class="entry">
+            ${headingText || datesText ? `<div class="entry-heading">${headingText ? `<h3>${escapeHtml(headingText)}</h3>` : ""}${datesText ? `<span>${escapeHtml(datesText)}</span>` : ""}</div>` : ""}
+            ${line(subheadingText, "meta")}
+            ${line(detailText)}
+            ${bulletsHtml}
+        </article>`
+    }
+
+    const completeContacts = [ resume.phone, resume.email, resume.linkedin, resume.github, resume.portfolio, resume.location ]
+        .map(text)
+        .filter(Boolean)
+        .map(escapeHtml)
+        .join(" <span aria-hidden=\"true\">|</span> ")
+    const heading = text(resume.name)
+        ? `<h1>${escapeHtml(text(resume.name))}</h1>`
+        : ""
+    const title = text(resume.professionalTitle)
+        ? `<p class="professional-title">${escapeHtml(text(resume.professionalTitle))}</p>`
+        : ""
+    const skillGroups = (Array.isArray(resume.skillGroups) ? resume.skillGroups : [])
+        .map(group => ({
+            category: text(group?.category),
+            skills: Array.isArray(group?.skills) ? group.skills.filter(value => text(value)) : []
+        }))
+        .filter(group => group.category && group.skills.length)
+    const skillItems = skillGroups.length
+        ? skillGroups.map(group => `<p class="skill-group"><strong>${escapeHtml(group.category)}:</strong> ${group.skills.map(value => escapeHtml(text(value))).join(", ")}</p>`).join("")
+        : list(resume.skills, "skills")
+    const hasExperience = Array.isArray(resume.experience) && resume.experience.some(item =>
+        item && (text(item.title) || text(item.company) || (Array.isArray(item.bullets) && item.bullets.some(value => text(value))))
+    )
+    const certifications = list(resume.certifications)
+    const achievements = list(resume.achievements)
+    const experienceSection = entries(resume.experience, "Experience", item => renderEntry({
+        heading: item.title,
+        subheading: [ item.company, item.location ].map(text).filter(Boolean).join(" | "),
+        dates: item.dates,
+        bullets: item.bullets
+    }))
+    const projectSection = entries(resume.projects, "Projects", item => renderEntry({
+        heading: item.name,
+        subheading: item.technologies,
+        dates: item.dates,
+        bullets: item.bullets
+    }))
+    const educationSection = entries(resume.education, "Education", item => renderEntry({
+        heading: item.degree,
+        subheading: [ item.institution, item.location ].map(text).filter(Boolean).join(" | "),
+        dates: item.dates,
+        detail: item.details
+    }))
 
     return `<!doctype html>
 <html lang="en">
 <head>
-<title>Professional Resume</title>
+<title>Customized Resume</title>
 <style>
-@page { size: A4; margin: 16mm; }
+@page { size: A4; margin: 10mm; }
 * { box-sizing: border-box; }
-body { color: #17212b; font: 10.5pt/1.55 Arial, sans-serif; margin: 0; }
+html { color: #000; background: #fff; }
+body { color: #000; font: 9.5pt/1.32 Arial, Helvetica, sans-serif; margin: 0; }
 main { max-width: 780px; margin: 0 auto; }
-header { border-bottom: 2px solid #247c78; margin-bottom: 24px; padding-bottom: 15px; }
-h1 { color: #173c45; font-size: 25pt; line-height: 1.15; margin: 0 0 6px; }
-.eyebrow { color: #247c78; font-size: 9pt; font-weight: 700; margin: 0 0 8px; text-transform: uppercase; }
-.target { color: #51616c; margin: 0; }
-section { margin: 0 0 22px; page-break-inside: avoid; }
-h2 { border-bottom: 1px solid #c8d4d5; color: #247c78; font-size: 12pt; margin: 0 0 9px; padding-bottom: 4px; }
-p { margin: 0 0 7px; overflow-wrap: anywhere; white-space: pre-wrap; }
-.skills { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
-.skills li { border: 1px solid #b9cecb; border-radius: 3px; padding: 3px 8px; }
+header { border-bottom: 1px solid #000; margin-bottom: 9px; padding-bottom: 7px; text-align: center; }
+h1 { color: #000; font-size: 20pt; line-height: 1.08; margin: 0 0 2px; }
+.professional-title { font-size: 10pt; font-weight: 700; margin: 0 0 3px; }
+.contact { color: #222; font-size: 8.5pt; overflow-wrap: anywhere; }
+section { margin: 0 0 9px; }
+h2 { border-bottom: 1px solid #777; color: #000; font-size: 10pt; letter-spacing: .04em; margin: 0 0 4px; padding-bottom: 2px; text-transform: uppercase; break-after: avoid; }
+p { margin: 0 0 3px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.skill-group { margin: 0 0 2px; }
+.skills { display: flex; flex-wrap: wrap; gap: 2px 12px; list-style: none; margin: 0; padding: 0; }
+.entry { margin: 0 0 6px; break-inside: avoid; }
+.entry-heading { align-items: baseline; display: flex; gap: 10px; justify-content: space-between; break-after: avoid; }
+h3 { color: #000; font-size: 9.5pt; margin: 0; }
+.entry-heading span, .meta { color: #222; font-size: 8.8pt; }
+ul:not(.skills) { margin: 2px 0 0; padding-left: 16px; }
+li { margin: 0 0 1px; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
 <main>
-<header><p class="eyebrow">Professional Resume</p><h1>Candidate Profile</h1><p class="target">Prepared for the supplied job description</p></header>
-${selfDescription?.trim() ? `<section><h2>Professional Profile</h2>${formatText(selfDescription)}</section>` : ""}
-${skillsSection}
-${resume?.trim() ? `<section><h2>Resume Details</h2>${formatText(resume)}</section>` : ""}
+<header>${heading}${title}${completeContacts ? `<p class="contact">${completeContacts}</p>` : ""}</header>
+${section("Professional Summary", line(resume.summary))}
+${hasExperience ? experienceSection : ""}
+${section("Technical Skills", skillItems)}
+${hasExperience ? projectSection : `${projectSection}${experienceSection}`}
+${educationSection}
+${section("Certifications", certifications)}
+${section("Achievements", achievements)}
 </main>
 </body>
 </html>`
@@ -557,5 +825,7 @@ function validateResumeHtml(html) {
 
 module.exports = {
     generateInterviewReport,
-    generateResumePdf
+    generateCustomizedResume,
+    generateResumePdf,
+    buildResumeHtml
 }
