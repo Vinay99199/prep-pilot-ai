@@ -3,6 +3,7 @@ import "../style/home-page.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
 import { useNotifications } from '../../notifications/useNotifications'
+import ProcessingLoader from '../../../components/ProcessingLoader'
 
 const Home = () => {
 
@@ -11,6 +12,7 @@ const Home = () => {
     const [ selfDescription, setSelfDescription ] = useState("")
     const [ resumeName, setResumeName ] = useState("")
     const [ isResumeDragging, setIsResumeDragging ] = useState(false)
+    const [ isGenerating, setIsGenerating ] = useState(false)
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
@@ -60,11 +62,17 @@ const Home = () => {
         return
     }
 
-    const data = await generateReport({
-        jobDescription,
-        selfDescription,
-        resumeFile
-    })
+    setIsGenerating(true)
+    let data
+    try {
+        data = await generateReport({
+            jobDescription,
+            selfDescription,
+            resumeFile
+        })
+    } finally {
+        setIsGenerating(false)
+    }
 
     if (data?._id) {
         navigate(`/interview/${data._id}`)
@@ -72,12 +80,7 @@ const Home = () => {
 }
 
     if (loading) {
-        return (
-            <main className='home-loading' role='status' aria-live='polite'>
-                <span className='home-loading__spinner' aria-hidden='true' />
-                <p>Loading your plans...</p>
-            </main>
-        )
+        return <ProcessingLoader variant={isGenerating ? "generation" : "initial"} />
     }
 
     return (

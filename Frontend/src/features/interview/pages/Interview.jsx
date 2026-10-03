@@ -2,6 +2,7 @@ import { useState } from 'react'
 import '../style/interview-page.scss'
 import { useInterview } from '../hooks/useInterview.js'
 import { Link, useParams } from 'react-router'
+import ProcessingLoader from '../../../components/ProcessingLoader'
 
 
 
@@ -241,11 +242,14 @@ const Interview = () => {
     }
 
     if (!report || (loading && !downloading)) {
+        if (loading) {
+            return <ProcessingLoader variant="initial" />
+        }
+
         return (
-            <main className='report-state' role={loading ? 'status' : undefined} aria-live={loading ? 'polite' : undefined}>
-                {loading && <span className='report-state__spinner' aria-hidden='true' />}
-                <p>{loading ? 'Loading your plan...' : 'This plan is not available.'}</p>
-                {!loading && <Link to='/'>Back to your plans</Link>}
+            <main className='report-state'>
+                <p>This plan is not available.</p>
+                <Link to='/'>Back to your plans</Link>
             </main>
         )
     }
@@ -280,6 +284,7 @@ const Interview = () => {
 
     return (
         <main className='interview-page'>
+            {downloading && <ProcessingLoader variant="pdf" overlay />}
             <header className='report-header'>
                 <div className='report-header__copy'>
                     <Link className='report-back' to='/'>

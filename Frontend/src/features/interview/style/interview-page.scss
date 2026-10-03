@@ -581,15 +581,6 @@
 .report-state p { margin: 0; }
 .report-state a { color: #55d3c3; font-size: 0.78rem; font-weight: 700; }
 
-.report-state__spinner {
-    width: 17px;
-    height: 17px;
-    border: 2px solid #34434e;
-    border-top-color: #35c3b1;
-    border-radius: 50%;
-    animation: report-spin 0.75s linear infinite;
-}
-
 @keyframes report-spin { to { transform: rotate(360deg); } }
 @keyframes report-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes score-enter { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
@@ -647,6 +638,5 @@
     .interview-page .q-card,
     .interview-page .roadmap-day,
     .interview-page .report-score__ring { animation: none; }
-    .interview-page .q-card__chevron,
-    .report-state__spinner { transition: none; animation-duration: 1.8s; }
+    .interview-page .q-card__chevron { transition: none; }
 }

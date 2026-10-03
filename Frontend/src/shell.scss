@@ -179,28 +179,141 @@ textarea:focus-visible {
     font-size: 0.68rem;
 }
 
-.app-loading {
-    display: flex;
-    min-height: 55vh;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    color: var(--muted);
-    font-size: 0.84rem;
+.processing-loader {
+    display: grid;
+    min-height: calc(100vh - 68px);
+    place-items: center;
+    padding: 32px 20px;
 }
 
-.app-loading p { margin: 0; }
+.processing-loader--overlay {
+    position: fixed;
+    z-index: 50;
+    inset: 0;
+    min-height: 100vh;
+    background: rgba(8, 13, 18, 0.76);
+    backdrop-filter: blur(5px);
+}
 
-.app-loading__spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid #34434e;
+.processing-loader__card {
+    width: min(100%, 480px);
+    padding: 36px 32px 30px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: linear-gradient(145deg, var(--surface-raised), var(--surface));
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.processing-loader__mark {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    margin: 0 auto 20px;
+    border: 1px solid rgba(53, 195, 177, 0.28);
+    border-radius: 16px;
+    background: var(--teal-soft);
+}
+
+.processing-loader__mark span {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(53, 195, 177, 0.25);
     border-top-color: var(--teal);
     border-radius: 50%;
-    animation: shell-spin 0.75s linear infinite;
+    animation: processing-spin 0.9s linear infinite;
 }
 
-@keyframes shell-spin { to { transform: rotate(360deg); } }
+.processing-loader__eyebrow {
+    margin: 0 0 9px;
+    color: var(--warm);
+    font-size: 0.66rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+}
+
+.processing-loader__message {
+    margin: 0;
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+    font-weight: 500;
+    line-height: 1.3;
+    animation: processing-message-in 0.35s ease both;
+}
+
+.processing-loader__detail {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 0.83rem;
+    line-height: 1.55;
+}
+
+.processing-loader__stages {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.processing-loader__stages li {
+    display: grid;
+    flex: 1;
+    justify-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 0.61rem;
+    transition: color 0.25s ease;
+}
+
+.processing-loader__stages li span {
+    width: 100%;
+    height: 3px;
+    border-radius: 5px;
+    background: var(--line);
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.processing-loader__stages .processing-loader__stage--active { color: var(--teal); }
+.processing-loader__stages .processing-loader__stage--complete { color: var(--teal); }
+.processing-loader__stages .processing-loader__stage--complete span {
+    background: rgba(53, 195, 177, 0.55);
+}
+.processing-loader__stages .processing-loader__stage--active span {
+    background: var(--teal);
+    box-shadow: 0 0 12px rgba(53, 195, 177, 0.3);
+}
+
+.processing-loader__dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 23px;
+}
+
+.processing-loader__dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: processing-dot 1s ease-in-out infinite;
+}
+
+.processing-loader__dots span:nth-child(2) { animation-delay: 0.14s; }
+.processing-loader__dots span:nth-child(3) { animation-delay: 0.28s; }
+
+@keyframes processing-spin { to { transform: rotate(360deg); } }
+@keyframes processing-dot { 0%, 60%, 100% { opacity: 0.35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
+@keyframes processing-message-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 520px) {
+    .processing-loader__card { padding: 30px 20px 25px; }
+    .processing-loader__stages { gap: 5px; }
+    .processing-loader__stages li { font-size: 0.56rem; }
+}
 
 @media (max-width: 680px) {
     .site-header__inner,
