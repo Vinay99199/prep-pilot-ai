@@ -1,6 +1,6 @@
-# InterviewAI – AI-Powered Job Preparation Platform
+# PrepPilot – AI-Powered Job Preparation Platform
 
-InterviewAI is a full-stack web application that I built to explore how AI can be used to make job preparation easier.
+PrepPilot is a full-stack web application that I built to explore how AI can be used to make job preparation easier.
 
 As a student, I wanted to build something more practical than a basic CRUD project. The idea was to create a platform where a user can upload a resume, provide a job description, identify skill gaps, and prepare for an interview using AI-generated questions and reports.
 
@@ -75,7 +75,7 @@ The basic flow of the application is:
 The project is divided into two main parts:
 
 ```text
-InterviewAI/
+PrepPilot/
 │
 ├── frontend/
 │   ├── src/

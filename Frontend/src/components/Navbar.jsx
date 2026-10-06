@@ -27,7 +27,7 @@ const Navbar = () => {
                 <Link className="brand" to={user ? "/" : "/login"} onClick={closeMenu}>
                     <span className="brand__mark">IA</span>
                     <span className="brand__copy">
-                        <strong>InterviewAI</strong>
+                        <strong>PrepPilot</strong>
                         <small>Interview prep, made practical</small>
                     </span>
                 </Link>

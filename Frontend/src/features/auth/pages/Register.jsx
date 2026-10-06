@@ -26,7 +26,7 @@ const Register = () => {
         }
         const success = await handleRegister({username,email,password})
         if (success) {
-            showToast({ type: "success", message: "Your InterviewAI account is ready." })
+            showToast({ type: "success", message: "Your PrepPilot account is ready." })
             navigate("/")
         }
     }

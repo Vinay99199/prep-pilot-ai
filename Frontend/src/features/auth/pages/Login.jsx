@@ -21,7 +21,7 @@ const Login = () => {
         }
         const success = await handleLogin({email,password})
         if (success) {
-            showToast({ type: "success", message: "Welcome back to InterviewAI." })
+            showToast({ type: "success", message: "Welcome back to PrepPilot." })
             navigate('/')
         }
     }
@@ -66,7 +66,7 @@ const Login = () => {
                         {loading ? 'Please wait...' : 'Log in'}
                     </button>
                 </form>
-                <p className='auth-card__switch'>New to InterviewAI? <Link to='/register'>Create an account</Link></p>
+                <p className='auth-card__switch'>New to PrepPilot? <Link to='/register'>Create an account</Link></p>
             </section>
         </main>
     )

@@ -68,7 +68,7 @@ const Account = () => {
 
                     <div className="account-summary__status">
                         <span />
-                        Signed in to InterviewAI
+                        Signed in to PrepPilot
                     </div>
                 </aside>
 
@@ -257,7 +257,7 @@ const Account = () => {
                             </div>
 
                             <p>
-                                Your email is used to sign in to InterviewAI.
+                                Your email is used to sign in to PrepPilot.
                             </p>
                         </div>
 

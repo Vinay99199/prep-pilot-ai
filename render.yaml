@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: interviewai-backend
+    name: preppilot-backend
     env: node
     rootDir: Backend
     buildCommand: npm install
