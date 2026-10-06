@@ -1,6 +1,0 @@
-node_modules/
-.puppeteer-cache/
-.env
-*.log
-.DS_Store
-.vscode/
